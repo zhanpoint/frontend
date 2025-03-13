@@ -1,0 +1,6 @@
+---
+description: 针对前端React项目的规则
+globs: 
+alwaysApply: false
+---
+[frontend-rule.md](mdc:.cursor/rules/frontend-rule.md)
