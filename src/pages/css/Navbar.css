@@ -1,0 +1,218 @@
+/* 导航栏整体样式 */
+.dream-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+    background-color: rgba(255, 255, 255, 0.95);
+    /* 默认浅色背景，适用于各种主题 */
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+.dark .dream-navbar {
+    background-color: rgba(20, 20, 20, 0.95);
+    /* 暗色模式背景 */
+}
+
+.navbar-container {
+    display: flex;
+    height: 64px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Logo 样式 */
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: 1rem;
+    /* 增加左侧边距 */
+
+}
+
+.navbar-logo img {
+    height: 32px;
+    width: 32px;
+}
+
+.navbar-logo-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+/* 桌面端导航菜单 */
+.navbar-menu {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+}
+
+/* 链接样式 */
+.nav-link {
+    display: inline-flex;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    /* 增加字体粗细 */
+    color: var(--muted-foreground);
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background-color: var(--muted);
+    color: var(--accent-foreground);
+}
+
+/* 下拉菜单触发器 */
+.nav-menu-trigger {
+    font-weight: 600;
+    /* 增加字体粗细 */
+}
+
+/* 下拉菜单内容 */
+.nav-menu-content {
+    width: 500px;
+    padding: 1rem;
+}
+
+.nav-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.nav-menu-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease;
+}
+
+.nav-menu-item:hover {
+    background-color: var(--muted);
+}
+
+.nav-menu-item-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    /* 增加字体粗细 */
+}
+
+.nav-menu-item-desc {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* 右侧工具栏 */
+.navbar-tools {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+    /* 让内容靠右 */
+}
+
+/* 搜索框容器 */
+.search-container {
+    position: relative;
+    margin-right: 0.5rem;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.625rem;
+    top: 0.625rem;
+    height: 16px;
+    width: 16px;
+    color: var(--muted-foreground);
+}
+
+.search-input {
+    padding-left: 2rem;
+    width: 300px;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border);
+    background-color: var(--background);
+    height: 36px;
+    font-size: 0.875rem;
+}
+
+/* 用户按钮 */
+.user-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.login-button,
+.signup-button {
+    font-weight: 600;
+    /* 增加字体粗细 */
+}
+
+/* 移动端样式 */
+@media (max-width: 768px) {
+
+    .navbar-menu,
+    .search-container,
+    .user-buttons {
+        display: none;
+    }
+
+    .mobile-menu {
+        display: block;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-menu {
+        display: none;
+    }
+}
+
+/* 移动端菜单样式 */
+.mobile-menu-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.mobile-search {
+    margin-bottom: 1.5rem;
+}
+
+.mobile-nav-item {
+    padding: 0.75rem 0;
+    font-weight: 600;
+    /* 增加字体粗细 */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobile-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
