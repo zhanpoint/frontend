@@ -14,7 +14,7 @@
 | 4    | 状态管理时必须使用 React 内置的 useState/useReducer          |
 | 5    | 网络请求时必须使用Axios前端请求库                            |
 | 6    | 表单处理时必须使用Formik表单库                               |
-|      |                                                              |
+| 7    | **代码尽量使用官方库或者是成熟的第三方库，尽量不使用自定义的。** |
 |      |                                                              |
 |      |                                                              |
 
@@ -62,105 +62,30 @@
 
 ## 代码生成规则
 
-- 要求模块化组件结构，每个组件职责清晰，逻辑分离
-- 所有样式都移至单独的 CSS 文件中，不再使用内联样式
-- 简洁清晰的代码注释，代码文档化
-- 组件结构清晰简洁，复用性高，易于维护管理
+- 模块化设计
+- 命名规范
+
+- 包含简洁清晰的注释，代码文档化
+- 代码复用性高，易于维护管理
 - 配置与代码分离
 
-## 前端目录结构（基于React 19 + Vite + JSX）
+
+
+### 流程应该是：
 
 ```
-frontend/
-├── .vscode/             # VS Code配置
-├── node_modules/        # 依赖包
-├── public/              # 静态资源
-│   ├── favicon.ico
-│   ├── robots.txt
-│   └── assets/
-│       └── images/      # 图片资源
-├── src/                 # 源代码
-│   ├── assets/          # 前端资源
-│   │   ├── icons/       # 图标
-│   │   ├── images/      # 图片
-│   │   └── styles/      # 全局样式
-│   ├── components/      # 通用组件
-│   │   ├── common/      # 基础公共组件
-│   │   │   ├── Button.jsx
-│   │   │   ├── Card.jsx
-│   │   │   ├── Modal.jsx
-│   │   │   └── ...
-│   │   ├── layout/      # 布局组件
-│   │   │   ├── Header.jsx
-│   │   │   ├── Footer.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   └── Layout.jsx
-│   │   ├── dream/       # 梦境相关组件
-│   │   │   ├── DreamCard.jsx
-│   │   │   ├── DreamForm.jsx
-│   │   │   ├── DreamList.jsx
-│   │   │   └── DreamTags.jsx
-│   │   ├── user/        # 用户相关组件
-│   │   │   ├── ProfileCard.jsx
-│   │   │   ├── UserAvatar.jsx
-│   │   │   └── ...
-│   │   └── knowledge/   # 知识板块组件
-│   │       ├── KnowledgeCard.jsx
-│   │       ├── ArticleList.jsx
-│   │       └── ...
-│   ├── hooks/           # 自定义钩子
-│   │   ├── useDreamForm.js
-│   │   ├── useAuth.js
-│   │   └── ...
-│   ├── pages/           # 页面组件
-│   │   ├── Home.jsx     # 首页
-│   │   ├── Login.jsx    # 登录页
-│   │   ├── Register.jsx # 注册页
-│   │   ├── Profile/     # 个人中心相关页面
-│   │   │   ├── ProfilePage.jsx
-│   │   │   ├── MyDreams.jsx
-│   │   │   ├── MyArticles.jsx
-│   │   │   └── Settings.jsx
-│   │   ├── Dream/       # 梦境相关页面
-│   │   │   ├── DreamCreate.jsx
-│   │   │   ├── DreamDetail.jsx
-│   │   │   ├── DreamEdit.jsx
-│   │   │   └── DreamsList.jsx
-│   │   ├── Community/   # 社区相关页面
-│   │   │   ├── CommunityHome.jsx
-│   │   │   ├── DreamWall.jsx
-│   │   │   └── TopContributors.jsx
-│   │   └── Knowledge/   # 知识中心页面
-│   │       ├── KnowledgeHome.jsx
-│   │       ├── DreamSymbols.jsx
-│   │       ├── DreamScience.jsx
-│   │       └── DreamTechniques.jsx
-│   ├── services/        # API服务
-│   │   ├── api.js       # Axios实例和拦截器
-│   │   ├── authService.js
-│   │   ├── dreamService.js
-│   │   ├── userService.js
-│   │   └── ...
-│   ├── utils/           # 工具函数
-│   │   ├── dateUtils.js
-│   │   ├── formatters.js
-│   │   ├── validators.js
-│   │   └── ...
-│   ├── context/         # React Context
-│   │   ├── AuthContext.js
-│   │   ├── ThemeContext.js
-│   │   └── ...
-│   ├── lib/             # Shadcn UI组件和配置
-│   │   ├── utils.js
-│   │   └── ...
-│   ├── App.jsx          # 应用入口组件
-│   ├── main.jsx         # 应用渲染入口
-│   └── routes.jsx       # React Router路由配置
-├── .gitignore           # Git忽略文件
-├── index.html           # HTML模板
-├── package.json         # 项目依赖配置
-├── vite.config.js       # Vite配置
-├── jsconfig.json        # JavaScript配置
-└── README.md            # 项目说明
+前端                              后端(Django)                      外部服务
+  |                                  |                                |
+  |--- 发送手机号 ------------------>|                                |
+  |                                  |--- 验证手机号格式              |
+  |                                  |--- 生成随机验证码              |
+  |                                  |----------------------> 调用SMS API
+  |                                  |                                |
+  |                                  |--- 将验证码存入Redis(设置60s过期)|
+  |<-- 返回发送成功（不返回验证码）--|                                |
+  |                                  |                                |
+  |--- 用户输入验证码并提交 -------->|                                |
+  |                                  |--- 从Redis获取验证码并比对     |
+  |<-- 返回验证结果 -----------------|                                |
 ```
 

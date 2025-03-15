@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import Writer from '../components/common/Writer.jsx';
 import './css/HomePage.css';
 

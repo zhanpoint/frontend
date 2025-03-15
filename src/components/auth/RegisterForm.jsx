@@ -1,8 +1,9 @@
-import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {Input} from "@/components/ui/input";
-import {Button} from "@/components/ui/Button";
-import {Eye, EyeOff, User, Lock, Phone} from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
+import { Eye, EyeOff, User, Lock, Phone } from "lucide-react";
+import { toast } from "sonner";
 import smsService from "@/services/smsService";
 import "./css/RegisterForm.css";
 
@@ -37,29 +38,29 @@ export function RegisterForm() {
 
     // 处理输入变化
     const handleChange = (e) => {
-        const {name, value} = e.target;
-        setFormData({...formData, [name]: value});
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
 
         // 清除相关字段的错误
         if (errors[name]) {
-            setErrors({...errors, [name]: ""});
+            setErrors({ ...errors, [name]: "" });
         }
 
         // 如果修改了密码，检查确认密码
         if (name === "password" && formData.confirmPassword) {
             if (value !== formData.confirmPassword) {
-                setErrors({...errors, confirmPassword: "两次输入的密码不一致"});
+                setErrors({ ...errors, confirmPassword: "两次输入的密码不一致" });
             } else {
-                setErrors({...errors, confirmPassword: ""});
+                setErrors({ ...errors, confirmPassword: "" });
             }
         }
 
         // 如果修改了确认密码，检查与密码是否一致
         if (name === "confirmPassword") {
             if (value !== formData.password) {
-                setErrors({...errors, confirmPassword: "两次输入的密码不一致"});
+                setErrors({ ...errors, confirmPassword: "两次输入的密码不一致" });
             } else {
-                setErrors({...errors, confirmPassword: ""});
+                setErrors({ ...errors, confirmPassword: "" });
             }
         }
     };
@@ -119,10 +120,10 @@ export function RegisterForm() {
     const handleSendVerificationCode = async () => {
         // 验证手机号
         if (!formData.phone) {
-            setErrors({...errors, phone: "请输入手机号+86"});
+            setErrors({ ...errors, phone: "请输入手机号+86" });
             return;
         } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
-            setErrors({...errors, phone: "请输入有效的手机号"});
+            setErrors({ ...errors, phone: "请输入有效的手机号" });
             return;
         }
 
@@ -139,7 +140,7 @@ export function RegisterForm() {
             // 成功情况 - 响应码200
             if (response.data.code === 200) {
                 // 显示成功信息
-                console.log(response.data.message || "验证码发送成功");
+                toast.success(response.data.message || "验证码发送成功");
 
                 // 开始倒计时
                 setCountdown(60);
@@ -158,6 +159,7 @@ export function RegisterForm() {
                     ...errors,
                     phone: response.data.message || "验证码发送可能失败，请稍后再试"
                 });
+                toast.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
         } catch (error) {
             // 请求失败
@@ -169,18 +171,23 @@ export function RegisterForm() {
 
                 // 显示后端返回的错误信息
                 if (responseData && responseData.message) {
-                    setErrors({...errors, phone: responseData.message});
+                    setErrors({ ...errors, phone: responseData.message });
+                    toast.error(responseData.message);
                 } else if (error.response.status === 500) {
-                    setErrors({...errors, phone: "验证码发送失败，请稍后再试"});
+                    setErrors({ ...errors, phone: "验证码发送失败，请稍后再试" });
+                    toast.error("服务器内部错误，请稍后再试");
                 } else {
-                    setErrors({...errors, phone: `请求失败 (${error.response.status})`});
+                    setErrors({ ...errors, phone: `请求失败 (${error.response.status})` });
+                    toast.error(`请求失败 (${error.response.status})`);
                 }
             } else if (error.request) {
                 // 请求发送了但没有收到响应
-                setErrors({...errors, phone: "网络错误，请检查您的网络连接"});
+                setErrors({ ...errors, phone: "网络错误，请检查您的网络连接" });
+                toast.error("网络错误，请检查您的网络连接");
             } else {
                 // 请求设置时发生错误
-                setErrors({...errors, phone: "发送请求出错"});
+                setErrors({ ...errors, phone: "发送请求出错" });
+                toast.error("发送请求出错");
             }
         } finally {
             // 结束加载状态
@@ -192,47 +199,85 @@ export function RegisterForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // 首先验证表单
         if (!validateForm()) {
             return;
         }
 
+        // 显示加载状态
+        setIsLoading(true);
+
         try {
-            // 验证短信验证码
-            const verifyResponse = await smsService.verifyCode(
+            // 调用注册API，一步完成带验证码的注册
+            const response = await smsService.registerWithCode(
+                formData.username,
+                formData.password,
                 formData.phone,
                 formData.verificationCode
             );
 
-            if (verifyResponse.data.success) {
-                // 验证码验证成功，可以继续用户注册流程
+            // 检查响应
+            console.log("注册请求响应:", response.data);
 
-                // 提交注册请求
-                console.log("提交注册信息：", formData);
-                // 实际开发时，这里需要调用API服务提交注册
+            // 处理响应 - 同时处理200和201状态码作为成功
+            if (response.data.code === 200 || response.data.code === 201) {
+                // 注册成功
+                console.log("注册成功:", response.data.message);
 
-                // 注册成功后跳转到登录页
-                // navigate("/login");
+                // 存储令牌（如果后端返回了令牌）
+                if (response.data.access && response.data.refresh) {
+                    localStorage.setItem('accessToken', response.data.access);
+                    localStorage.setItem('refreshToken', response.data.refresh);
+                    console.log("令牌已存储");
+                }
 
-                // 临时弹窗提示
-                alert("注册成功！现在可以登录了。");
+                // 存储用户信息（如果有）
+                if (response.data.data) {
+                    localStorage.setItem('user', JSON.stringify(response.data.data));
+                }
+
+                // 显示成功消息
+                toast.success(response.data.message || "注册成功！欢迎加入梦境门户！");
+
+                // 跳转到首页
+                navigate("/");
             } else {
-                // 验证码验证失败
-                setErrors({
-                    ...errors,
-                    verificationCode: verifyResponse.data.message || "验证码验证失败"
-                });
+                // 其他非错误但不是成功的情况
+                toast.warning(response.data.message || "注册过程中出现问题，请稍后重试");
             }
         } catch (error) {
-            console.error("验证码验证失败:", error);
+            // 请求失败
+            console.error("注册失败:", error);
 
+            // 显示错误消息
             if (error.response) {
-                setErrors({
-                    ...errors,
-                    verificationCode: error.response.data.error || "验证码验证失败"
-                });
+                // 服务器返回了错误响应
+                const responseData = error.response.data;
+
+                if (responseData && responseData.message) {
+                    if (responseData.field) {
+                        // 特定字段的错误
+                        setErrors({ ...errors, [responseData.field]: responseData.message });
+                        toast.error(`${responseData.field}错误: ${responseData.message}`);
+                    } else {
+                        // 一般错误
+                        toast.error(responseData.message);
+                    }
+                } else if (error.response.status === 500) {
+                    toast.error("服务器内部错误，请稍后重试");
+                } else {
+                    toast.error(`注册失败 (${error.response.status})`);
+                }
+            } else if (error.request) {
+                // 请求发送了但没有收到响应
+                toast.error("网络错误，请检查您的网络连接");
             } else {
-                setErrors({...errors, verificationCode: "网络错误，请稍后重试"});
+                // 请求设置时发生错误
+                toast.error("发送请求出错");
             }
+        } finally {
+            // 结束加载状态
+            setIsLoading(false);
         }
     };
 
@@ -244,7 +289,7 @@ export function RegisterForm() {
                     用户名
                 </label>
                 <div className="input-container">
-                    <User className="input-icon" size={18}/>
+                    <User className="input-icon" size={18} />
                     <Input
                         id="username"
                         name="username"
@@ -264,7 +309,7 @@ export function RegisterForm() {
                     密码
                 </label>
                 <div className="input-container">
-                    <Lock className="input-icon" size={18}/>
+                    <Lock className="input-icon" size={18} />
                     <Input
                         id="password"
                         name="password"
@@ -279,7 +324,7 @@ export function RegisterForm() {
                         className="password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
                     >
-                        {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
                 {errors.password && <div className="error-message">{errors.password}</div>}
@@ -291,7 +336,7 @@ export function RegisterForm() {
                     确认密码
                 </label>
                 <div className="input-container">
-                    <Lock className="input-icon" size={18}/>
+                    <Lock className="input-icon" size={18} />
                     <Input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -306,7 +351,7 @@ export function RegisterForm() {
                         className="password-toggle"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
-                        {showConfirmPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
                 {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
@@ -318,7 +363,7 @@ export function RegisterForm() {
                     手机号
                 </label>
                 <div className="input-container">
-                    <Phone className="input-icon" size={18}/>
+                    <Phone className="input-icon" size={18} />
                     <Input
                         id="phone"
                         name="phone"
@@ -365,8 +410,12 @@ export function RegisterForm() {
             </div>
 
             {/* 注册按钮 */}
-            <Button type="submit" className="register-button">
-                注册
+            <Button
+                type="submit"
+                className="register-button"
+                disabled={isLoading}
+            >
+                {isLoading ? "注册中..." : "注册"}
             </Button>
 
             {/* 登录链接 */}
