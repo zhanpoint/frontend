@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '@/components/common/css/Writer.css';
+import '@/components/ui/css/Writer.css';
 
 /**
  * 梦境门户打字机组件

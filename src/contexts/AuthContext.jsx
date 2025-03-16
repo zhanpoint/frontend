@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import authService from '@/services/authService';
+import { auth } from '@/services';
 import notification from '@/utils/notification';
 
 // 创建认证上下文
@@ -10,36 +10,37 @@ const AuthContext = createContext();
  */
 export function AuthProvider({ children }) {
     // 状态管理
-    const [user, setUser] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState(null);  // 用户信息:当前登录用户的详细资料
+    const [isAuthenticated, setIsAuthenticated] = useState(false);  // 认证状态:用户是否已登录
+    const [isLoading, setIsLoading] = useState(true);  // 加载状态:是否正在加载认证状态
 
     // 初始化认证状态
     useEffect(() => {
         const initAuth = () => {
             try {
                 // 检查认证状态
-                const isAuth = authService.isAuthenticated();
-                setIsAuthenticated(isAuth);
+                const isAuth = auth.isAuthenticated();  // 检查本地存储的令牌是否有效
+                setIsAuthenticated(isAuth);  // 更新认证状态
 
                 // 获取用户数据
                 if (isAuth) {
-                    setUser(authService.getCurrentUser());
+                    setUser(auth.getCurrentUser());
                 }
             } finally {
+                // 标记认证检查已完成，让应用知道可以渲染依赖于认证状态的组件了。
                 setIsLoading(false);
             }
         };
 
         initAuth();
 
-        // 监听认证事件
+        // 监听认证事件:事件处理令牌过期的情况，当后端返回未授权错误时，可以触发此事件
         const handleAuthRequired = () => {
             setIsAuthenticated(false);
             setUser(null);
             notification.warning('您的登录状态已过期，请重新登录');
         };
-
+        // 监听登出事件:当用户手动登出时，可以触发此事件
         const handleLogout = () => {
             setIsAuthenticated(false);
             setUser(null);
@@ -48,19 +49,18 @@ export function AuthProvider({ children }) {
         window.addEventListener('auth:required', handleAuthRequired);
         window.addEventListener('auth:logout', handleLogout);
 
+        // 返回的清理函数移除事件监听器，防止内存泄漏和重复监听。
         return () => {
             window.removeEventListener('auth:required', handleAuthRequired);
             window.removeEventListener('auth:logout', handleLogout);
         };
     }, []);
 
-    /**
-     * 登录方法
-     */
+    // 登录方法
     const login = async (username, password) => {
         try {
             // 使用通知包装Promise显示加载状态
-            const loginPromise = authService.login(username, password);
+            const loginPromise = auth.login(username, password);
 
             notification.loading('正在登录...', loginPromise, {
                 success: '登录成功！欢迎回来',
@@ -88,22 +88,20 @@ export function AuthProvider({ children }) {
         }
     };
 
-    /**
-     * 注销方法
-     */
+    // 登出方法
     const logout = () => {
-        authService.logout();
+        auth.logout();
         setUser(null);
         setIsAuthenticated(false);
     };
 
     // 上下文提供的值
     const value = {
-        user,
-        isAuthenticated,
-        isLoading,
-        login,
-        logout
+        user,  // 用户信息
+        isAuthenticated,  // 认证状态
+        isLoading,  // 加载状态
+        login,  // 登录方法
+        logout  // 登出方法
     };
 
     return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Writer from '../components/common/Writer.jsx';
+import Writer from '../components/ui/Writer.jsx';
 import './css/HomePage.css';
 
 /**

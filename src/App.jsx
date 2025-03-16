@@ -1,21 +1,21 @@
+import { Routes, Route } from "react-router-dom";
 import { Navbar } from "./pages/Navbar";
 import HomePage from "./pages/HomePage";
+import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "sonner";
 
 function App() {
-  // 导航栏数据
-  const navbarData = {
-    user: {
-      isLoggedIn: false,
-      login: { text: "登录", url: "/login" },
-      signup: { text: "注册", url: "/signup" },
-    },
-  };
-
   return (
-    <div className="home-container">
-      <Navbar {...navbarData} />
-      <HomePage />
-    </div>
+    <AuthProvider>
+      <div className="home-container">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          {/* 其他路由将在此处添加 */}
+        </Routes>
+        <Toaster position="top-right" richColors closeButton />
+      </div>
+    </AuthProvider>
   );
 }
 

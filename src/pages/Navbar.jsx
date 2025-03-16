@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, User, Menu, Book, Compass, Users } from "lucide-react";
 import "./css/Navbar.css";
+import { useAuth } from "@/contexts/AuthContext";
+import UserAvatar from "@/components/user/UserAvatar";
 
 import {
     NavigationMenu,
@@ -27,9 +29,6 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 
-// 定义菜单项接口
-const MenuItem = ({ title, url, description, icon, items }) => {
-};
 
 // 定义导航栏属性接口
 const Navbar = ({
@@ -105,14 +104,10 @@ const Navbar = ({
             ],
         },
     ],
-    user = {
-        isLoggedIn: false,
-        login: { text: "登录", url: "/login" },
-        signup: { text: "注册", url: "/signup" },
-    },
 }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
+    const { isAuthenticated, isLoading } = useAuth();
 
     // 渲染桌面端菜单项
     const renderMenuItem = (item) => {
@@ -245,40 +240,28 @@ const Navbar = ({
                     </div>
 
                     {/* 用户菜单 */}
-                    {user.isLoggedIn ? (
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" className="rounded-full">
-                                {user.avatar ? (
-                                    <img
-                                        src={user.avatar}
-                                        alt={user.name || "用户"}
-                                        className="h-8 w-8 rounded-full"
-                                    />
-                                ) : (
-                                    <User className="h-5 w-5" />
-                                )}
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="user-buttons">
-                            <Button
-                                asChild
-                                variant="outline"
-                                size="sm"
-                                className="login-button"
-                                onClick={() => navigate(user.login.url)}
-                            >
-                                <a href={user.login.url}>{user.login.text}</a>
-                            </Button>
-                            <Button
-                                asChild
-                                size="sm"
-                                className="signup-button"
-                                onClick={() => navigate("/register")}
-                            >
-                                <a href="/register">{user.signup.text}</a>
-                            </Button>
-                        </div>
+                    {!isLoading && (
+                        isAuthenticated ? (
+                            <UserAvatar />
+                        ) : (
+                            <div className="user-buttons">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="login-button"
+                                    onClick={() => navigate('/login')}
+                                >
+                                    登录
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    className="signup-button"
+                                    onClick={() => navigate('/register')}
+                                >
+                                    注册
+                                </Button>
+                            </div>
+                        )
                     )}
 
                     {/* 移动端菜单 */}
@@ -324,23 +307,28 @@ const Navbar = ({
                                     </Accordion>
 
                                     {/* 移动端用户操作 */}
-                                    {!user.isLoggedIn && (
+                                    {!isLoading && !isAuthenticated && (
                                         <div className="mobile-buttons">
                                             <Button
-                                                asChild
                                                 variant="outline"
                                                 className="login-button"
-                                                onClick={() => navigate(user.login.url)}
+                                                onClick={() => navigate('/login')}
                                             >
-                                                <a href={user.login.url}>{user.login.text}</a>
+                                                登录
                                             </Button>
                                             <Button
-                                                asChild
                                                 className="signup-button"
-                                                onClick={() => navigate("/register")}
+                                                onClick={() => navigate('/register')}
                                             >
-                                                <a href="/register">{user.signup.text}</a>
+                                                注册
                                             </Button>
+                                        </div>
+                                    )}
+
+                                    {/* 移动端用户头像 */}
+                                    {!isLoading && isAuthenticated && (
+                                        <div className="flex justify-center py-4">
+                                            <UserAvatar />
                                         </div>
                                     )}
                                 </div>

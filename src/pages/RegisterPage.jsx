@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { RegisterForm } from "@/components/auth/RegisterForm";
-import "./css/Register.css";
+import "./css/RegisterPage.css";
 
 /**
  * 注册页面组件

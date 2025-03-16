@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import { Eye, EyeOff, User, Lock, Phone } from "lucide-react";
 import { toast } from "sonner";
-import smsService from "@/services/smsService";
+import { smsService } from "@/services/notification/sms";
+import { smsAuth } from "@/services/auth/smsAuth";
 import "./css/RegisterForm.css";
 
 /**
@@ -209,7 +210,7 @@ export function RegisterForm() {
 
         try {
             // 调用注册API，一步完成带验证码的注册
-            const response = await smsService.registerWithCode(
+            const response = await smsAuth.registerWithCode(
                 formData.username,
                 formData.password,
                 formData.phone,

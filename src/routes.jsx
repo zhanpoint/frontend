@@ -1,10 +1,10 @@
 import React from "react";
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
-import Register from "./pages/Register";
+import Register from "./pages/RegisterPage";
+import { LoginPage } from "./pages/LoginPage";
 
 // 其他页面导入将在这里添加
-// import Login from "./pages/Login";
 // import HomePage from "./pages/HomePage";
 
 /**
@@ -19,11 +19,11 @@ const router = createBrowserRouter([
         path: "/register",
         element: <Register />,
     },
+    {
+        path: "/login",
+        element: <LoginPage />,
+    },
     // 其他路由将在这里添加
-    // {
-    //   path: "/login",
-    //   element: <Login />,
-    // },
 ]);
 
 export default router; 
