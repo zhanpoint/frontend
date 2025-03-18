@@ -216,3 +216,15 @@
     flex-direction: column;
     gap: 0.75rem;
 }
+
+.create-post-btn {
+    margin-right: 1rem;
+    background-color: #2563eb;
+    color: white;
+    transition: all 0.2s ease-in-out;
+}
+
+.create-post-btn:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+}

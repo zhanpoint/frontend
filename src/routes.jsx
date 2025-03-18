@@ -3,6 +3,9 @@ import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Register from "./pages/RegisterPage";
 import { LoginPage } from "./pages/LoginPage";
+import CreatePost from "./pages/CreatePost";
+import HomePage from "./pages/HomePage";
+import PrivateRoute from "./components/auth/PrivateRoute";
 
 // 其他页面导入将在这里添加
 // import HomePage from "./pages/HomePage";
@@ -14,6 +17,20 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <App />,
+        children: [
+            {
+                index: true,
+                element: <HomePage />,
+            },
+            {
+                path: "create-post",
+                element: (
+                    <PrivateRoute>
+                        <CreatePost />
+                    </PrivateRoute>
+                ),
+            },
+        ],
     },
     {
         path: "/register",

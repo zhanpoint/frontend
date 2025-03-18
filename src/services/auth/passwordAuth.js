@@ -31,27 +31,6 @@ export const passwordAuth = {
         });
     },
 
-    /**
-     * 请求密码重置
-     * @param {string} email - 用户邮箱
-     * @returns {Promise} - API响应
-     */
-    resetPasswordRequest: async (email) => {
-        return api.post('/auth/reset-password-request/', { email });
-    },
-
-    /**
-     * 重置密码
-     * @param {string} token - 重置令牌
-     * @param {string} newPassword - 新密码
-     * @returns {Promise} - API响应
-     */
-    resetPassword: async (token, newPassword) => {
-        return api.post('/auth/reset-password/', {
-            token,
-            new_password: newPassword
-        });
-    }
 };
 
 export default passwordAuth; 

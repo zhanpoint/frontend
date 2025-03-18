@@ -242,7 +242,16 @@ const Navbar = ({
                     {/* 用户菜单 */}
                     {!isLoading && (
                         isAuthenticated ? (
-                            <UserAvatar />
+                            <div className="flex items-center gap-4">
+                                <Button
+                                    size="sm"
+                                    className="create-post-btn"
+                                    onClick={() => navigate('/create-post')}
+                                >
+                                    创建梦境
+                                </Button>
+                                <UserAvatar />
+                            </div>
                         ) : (
                             <div className="user-buttons">
                                 <Button

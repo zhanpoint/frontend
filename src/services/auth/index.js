@@ -2,7 +2,8 @@ import api from '../api';
 import tokenManager from './tokenManager';
 import passwordAuth from './passwordAuth';
 import smsAuth from './smsAuth';
-import {toast} from "sonner";
+import profileManager from './profileManager';
+import { toast } from 'sonner';
 
 /**
  * 统一认证服务
@@ -32,7 +33,7 @@ export const auth = {
             const refreshToken = tokenManager.getRefreshToken();
             if (accesstoken) {
                 // 向后端发送注销请求，使当前token失效
-                await api.post('/auth/logout/', {refresh: refreshToken}, {
+                await api.post('/auth/logout/', { refresh: refreshToken }, {
                     headers: {
                         Authorization: `Bearer ${accesstoken}`
                     }
@@ -47,10 +48,11 @@ export const auth = {
             tokenManager.clearUserData();
             // 触发登出事件
             window.dispatchEvent(new CustomEvent('auth:logout'));
-            // 重定向到首页
+            toast.success('已成功退出登录');
+            // 重定向到首页，延长延迟时间确保提示消息能够显示
             setTimeout(() => {
                 window.location.href = '/';
-            }, 2000);
+            }, 1000);
         }
     },
 
@@ -93,7 +95,10 @@ export const auth = {
     ...passwordAuth,
 
     // 从短信认证服务导出方法
-    ...smsAuth
+    ...smsAuth,
+
+    // 从用户资料管理服务导出方法
+    ...profileManager
 };
 
 // 默认导出

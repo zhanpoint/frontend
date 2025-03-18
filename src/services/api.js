@@ -6,7 +6,7 @@ const api = axios.create({
     // 根据实际部署环境设置baseURL
     baseURL: import.meta.env.MODE === 'production'
         ? 'https://yourdomain.com/api' // 生产环境API地址
-        : 'http://localhost:8412/api',  // 开发环境API地址
+        : 'http://localhost:8412/api',  // 开发环境API地址，与vite代理保持一致
 
     // 请求超时时间
     timeout: 10000,
@@ -21,7 +21,7 @@ const api = axios.create({
 // 请求拦截器 - 添加认证令牌
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('accessToken');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token) config.headers.Authorization = `Bearer ${token}`;  // 为每一个请求添加认证令牌
     return config;
 }, error => Promise.reject(error));
 
@@ -38,7 +38,7 @@ api.interceptors.response.use(response => response, async error => {
             const token = localStorage.getItem('refreshToken');
             if (!token) throw new Error('无刷新令牌');
 
-            const response = await axios.post('/api/token/refresh/', { refresh: token });
+            const response = await axios.post(`${api.defaults.baseURL}/token/refresh/`, { refresh: token });
             const newToken = response.data.access;
 
             // 保存新令牌
@@ -99,7 +99,6 @@ export const auth = {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         window.dispatchEvent(new CustomEvent('auth:logout'));
-        toast.success('已成功退出登录');
     },
 
     // 检查认证状态
