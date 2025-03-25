@@ -228,3 +228,18 @@
     background-color: #1d4ed8;
     transform: translateY(-1px);
 }
+
+.my-dreams-btn {
+    background: linear-gradient(120deg, #6366f1, #8b5cf6);
+    color: white;
+    font-weight: 400;
+    padding: 0.75rem 0.6rem;
+    border-radius: 0.5rem;
+    border: none;
+}
+
+.my-dreams-btn:hover {
+    background: linear-gradient(120deg, #5a67d8, #7c3aed);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}

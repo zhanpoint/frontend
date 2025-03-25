@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -257,11 +257,6 @@ export function DualLoginForm() {
 
     return (
         <Card className="w-full max-w-md mx-auto shadow-lg">
-            <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-bold text-center">登录账户</CardTitle>
-                <CardDescription className="text-center">
-                </CardDescription>
-            </CardHeader>
 
             <Tabs value={loginMode} onValueChange={setLoginMode} className="w-full">
                 <TabsList className="grid grid-cols-2 w-full">
@@ -273,7 +268,7 @@ export function DualLoginForm() {
                 <TabsContent value="password">
                     <CardContent className="space-y-4">
                         {errors.general && (
-                            <div className="p-3 text-sm bg-red-50 border border-red-200 text-red-600 rounded-md">
+                            <div className="p-3 text-sm bg-red-900/20 border border-red-800/30 text-red-400 rounded-md">
                                 {errors.general}
                             </div>
                         )}
@@ -355,7 +350,7 @@ export function DualLoginForm() {
                 <TabsContent value="sms">
                     <CardContent className="space-y-4">
                         {errors.general && (
-                            <div className="p-3 text-sm bg-red-50 border border-red-200 text-red-600 rounded-md">
+                            <div className="p-3 text-sm bg-red-900/20 border border-red-800/30 text-red-400 rounded-md">
                                 {errors.general}
                             </div>
                         )}

@@ -27,13 +27,6 @@ export function LoginPage() {
                     </div>
 
                     <DualLoginForm />
-
-                    <div className="login-footer">
-                        登录即表示您同意我们的
-                        <Link to="/terms" className="mx-1">服务条款</Link>
-                        和
-                        <Link to="/privacy" className="mx-1">隐私政策</Link>
-                    </div>
                 </div>
 
                 {/* 背景装饰元素 */}

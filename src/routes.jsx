@@ -5,10 +5,10 @@ import Register from "./pages/RegisterPage";
 import { LoginPage } from "./pages/LoginPage";
 import CreatePost from "./pages/CreatePost";
 import HomePage from "./pages/HomePage";
+import MyDreams from "./pages/MyDreams";
+import DreamDetail from "./pages/DreamDetail";
+import EditDream from "./pages/EditDream";
 import PrivateRoute from "./components/auth/PrivateRoute";
-
-// 其他页面导入将在这里添加
-// import HomePage from "./pages/HomePage";
 
 /**
  * 应用路由配置
@@ -27,6 +27,30 @@ const router = createBrowserRouter([
                 element: (
                     <PrivateRoute>
                         <CreatePost />
+                    </PrivateRoute>
+                ),
+            },
+            {
+                path: "my-dreams",
+                element: (
+                    <PrivateRoute>
+                        <MyDreams />
+                    </PrivateRoute>
+                ),
+            },
+            {
+                path: "dreams/:id",
+                element: (
+                    <PrivateRoute>
+                        <DreamDetail />
+                    </PrivateRoute>
+                ),
+            },
+            {
+                path: "edit-dream/:dreamId",
+                element: (
+                    <PrivateRoute>
+                        <EditDream />
                     </PrivateRoute>
                 ),
             },

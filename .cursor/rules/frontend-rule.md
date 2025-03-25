@@ -1,61 +1,30 @@
-Before diving into the best practices, please note that you may need to adapt the globs depending on your project's specific structure and file types.
+注意：该项目全栈项目的前端部分，后端部分使用的是django4.2版本框架
 
----
-name: react-best-practices.mdc
-description: Best practices for React 19 applications
-globs: **/*.{js,jsx}
----
+# 在深入研究最佳实践之前，请注意，您可能需要根据特定的项目结构调整全局变量。
 
-- Utilize React 19's new features like automatic batching for better performance.
-- Keep components small and focused on a single responsibility for easier maintenance.
-- Use `useState` and `useReducer` for state management to ensure simpler and more predictable state updates.
-- Implement proper error boundaries to enhance user experience and application stability.
-- Use functional components with hooks for cleaner and more concise code.
+- 导入和命名规范化
+- 代码结构优化
+- 消除重复代码：
+- 简化条件逻辑：
+- 组件复用：
+- 改进用户体验
+- 代码简洁化
 
----
-name: react-router-dom-best-practices.mdc
-description: Best practices for routing with react-router-dom
-globs: **/*.{js,jsx}
----
+## 该前端React项目的主题是：梦境
 
-- Use the latest version of react-router-dom for improved performance and features.
-- Implement nested routes to create a more organized and maintainable routing structure.
-- Use the `useNavigate` hook for programmatic navigation to enhance user experience.
-- Implement route protection to ensure secure access to certain routes.
-- Use `useParams` and `useLocation` hooks for easier data handling within routes.
 
----
-name: shadcn-ui-best-practices.mdc
-description: Best practices for using Shadcn UI components
-globs: **/*.{js,jsx,css}
----
 
-- Follow Shadcn UI's component guidelines to ensure consistent styling across your application.
-- Customize components using the provided utility classes for more flexible and maintainable UI.
-- Ensure all components are accessible by following Shadcn UI's accessibility best practices.
-- Use Shadcn UI's responsive design features to enhance user experience on different devices.
-- Keep components up-to-date with the latest Shadcn UI releases for improved performance and features.
+## 我的前端React项目技术栈规则列表如下：
 
----
-name: axios-best-practices.mdc
-description: Best practices for making HTTP requests with Axios
-globs: **/*.{js,jsx}
----
+| id   | 规则详情                                                     |
+| ---- | :----------------------------------------------------------- |
+| 1    | 该React项目使用的是19版本，通过vite构建，所有组件语言均为JSX编写而非TSX，是基于JavaScript的 |
+| 2    | 路由组件必须使用第三方库react-router-dom                     |
+| 3    | UI组件必须使用第三方组件库Shadcn UI                          |
+| 4    | 状态管理时必须使用 React 内置的 useState/useReducer          |
+| 5    | 网络请求时必须使用Axios前端请求库                            |
+| 6    | 表单处理时必须使用Formik表单库                               |
+| 7    | **代码尽量使用官方库或者是成熟的第三方库，尽量不使用自定义的。** |
+|      |                                                              |
+|      |                                                              |
 
-- Use Axios interceptors to handle global request and response logic for more secure and consistent API interactions.
-- Implement proper error handling and retries to enhance user experience and application reliability.
-- Use Axios' cancel token feature to manage and cancel ongoing requests for better performance.
-- Configure Axios defaults to reduce code duplication and improve maintainability.
-- Use Axios' built-in support for JSON data to simplify data handling and ensure data integrity.
-
----
-name: formik-best-practices.mdc
-description: Best practices for form handling with Formik
-globs: **/*.{js,jsx}
----
-
-- Use Formik's validation schema to ensure data integrity and enhance user experience.
-- Implement custom validation functions for more complex form logic and better security.
-- Use Formik's `useFormik` hook for more concise and maintainable form code.
-- Implement proper error handling and display to improve user experience and form usability.
-- Use Formik's built-in support for asynchronous form submission to enhance performance and user feedback.

@@ -1,16 +1,17 @@
 import { Outlet } from "react-router-dom";
 import { Navbar } from "./pages/Navbar";
 import { AuthProvider } from "./contexts/AuthContext";
-import { Toaster } from "sonner";
+import { DreamsProvider } from "./contexts/DreamsContext";
 
 function App() {
   return (
     <AuthProvider>
-      <div className="home-container">
-        <Navbar />
-        <Outlet />
-        <Toaster position="top-right" richColors closeButton />
-      </div>
+      <DreamsProvider>
+        <div className="home-container">
+          <Navbar />
+          <Outlet />
+        </div>
+      </DreamsProvider>
     </AuthProvider>
   );
 }
