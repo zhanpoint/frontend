@@ -131,8 +131,14 @@ class DreamImageWebSocketClient {
                     // 启动定时ping，保持连接活跃
                     this.startPingInterval();
 
-                    // 通知连接成功
-                    notification.success('图片处理状态更新已连接');
+                    // 通知连接成功但不显示通知，减少用户干扰
+                    console.log('图片处理状态更新已连接');
+
+                    // 连接建立后主动请求最新状态
+                    this.sendJSON({
+                        type: 'request_status',
+                        dream_id: this.dreamId
+                    });
                     break;
 
                 case 'image_update':

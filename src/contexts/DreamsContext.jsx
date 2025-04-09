@@ -135,11 +135,17 @@ export function DreamsProvider({ children }) {
 
             // 更新成功后，使用返回的数据更新本地缓存
             if (response.data) {
+                // 检查是否有WebSocket通知信息
+                if (response.data.images_status && response.data.images_status.status === 'processing') {
+                    // 显示图片处理提示
+                    notification.info(response.data.images_status.message || '图片正在后台处理中...');
+                }
+
                 // 先添加到本地缓存
                 addOrUpdateDream(response.data);
                 notification.success('梦境记录已成功更新');
                 console.log(`DreamsContext: 已更新${dreamData.id}号梦境`);
-                return true;
+                return response.data;
             }
 
             return false;

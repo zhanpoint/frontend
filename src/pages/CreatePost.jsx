@@ -429,174 +429,137 @@ const CreatePost = ({ isEditMode = false, existingDream = null }) => {
         navigate(-1);
     }, [localFiles, navigate]);
 
-    // 表单提交
+    // 从内容中提取图片URL和位置信息
+    const extractImagesInfo = useCallback(() => {
+        if (!formData.content) return { remoteImages: [], localImages: [] };
+
+        const remoteImages = [];
+        const localImages = {};
+
+        // 正则表达式匹配Markdown格式的图片
+        const regex = /!\[(.*?)\]\((.*?)\)/g;
+        let match;
+        let index = 0;
+
+        // 查找所有图片
+        while ((match = regex.exec(formData.content)) !== null) {
+            const url = match[2];
+            const position = match.index;
+
+            // 区分远程图片和本地图片
+            if (url.startsWith('http')) {
+                remoteImages.push({
+                    url,
+                    position,
+                    description: match[1] || ''
+                });
+            } else if (url.startsWith('blob:')) {
+                // 查找对应的本地文件
+                const fileInfo = localFiles.find(f => f.blobUrl === url);
+                if (fileInfo) {
+                    localImages[url] = {
+                        file: fileInfo.file,
+                        position,
+                        description: match[1] || ''
+                    };
+                }
+            }
+            index++;
+        }
+
+        return { remoteImages, localImages };
+    }, [formData.content, localFiles]);
+
+    // 表单提交处理函数
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 表单验证
         if (!validateForm()) return;
 
-        setIsSubmitting(true);
-
         try {
-            // 收集当前内容中的所有图片信息
-            const currentImageUrls = extractImageUrls(formData.content);
+            setIsSubmitting(true);
 
-            // 添加调试日志，查看提取的图片URLs
-            console.log("提取的图片URLs:", currentImageUrls);
+            // 提取图片信息
+            const { remoteImages, localImages } = extractImagesInfo();
 
-            // 区分远程URL和本地blob URL (更精确的检查方式)
-            const remoteImages = currentImageUrls.filter(img => img.url.startsWith('http'));
-            const blobImages = currentImageUrls.filter(img => img.url.startsWith('blob:'));
+            // 准备提交数据
+            const formDataObj = new FormData();
+            let dreamId;
 
-            console.log("远程图片数量:", remoteImages.length, "本地图片数量:", blobImages.length);
-            console.log("本地文件列表:", localFiles);
+            // 基本信息
+            formDataObj.append('title', formData.title);
+            formDataObj.append('content', removeImagesFromContent(formData.content));
 
-            // 从content中移除所有图片Markdown，只保留position信息
-            const contentWithoutImages = removeImagesFromContent(formData.content);
+            // 分类
+            formDataObj.append('categories', JSON.stringify(formData.categories));
 
-            // 构建请求数据 - 表单部分
-            const requestData = new FormData();
-
-            // 添加基本信息
-            requestData.append('title', formData.title.trim());
-            requestData.append('content', contentWithoutImages);
-            requestData.append('categories', JSON.stringify(formData.categories));
-
-            // 修正tags结构以匹配后端期望格式
-            requestData.append('tags', JSON.stringify({
+            // 标签
+            formDataObj.append('tags', JSON.stringify({
                 theme: formData.theme,
                 character: formData.character,
                 location: formData.location
             }));
 
-            // 添加当前保留的远程图片信息
+            // 处理远程图片信息
             if (remoteImages.length > 0) {
-                // 收集远程图片信息 (URL和位置)
-                const remoteImagesData = remoteImages.map(img => {
-                    // 尝试从imageInfos中找到对应的图片ID
-                    const existingImage = imageInfos.find(info => {
-                        if (!info.url) return false;
-
-                        // 标准化URL进行比较
-                        const infoUrl = info.url.split('?')[0].trim();
-                        const imgUrl = img.url.split('?')[0].trim();
-
-                        return infoUrl === imgUrl;
-                    });
-
-                    return {
-                        id: existingImage?.id || null,
+                formDataObj.append('remoteImages', JSON.stringify(
+                    remoteImages.map(img => ({
                         url: img.url,
-                        position: img.position
-                    };
-                });
-
-                requestData.append('remoteImages', JSON.stringify(remoteImagesData));
-                console.log("保留的远程图片数据:", remoteImagesData);
+                        position: img.position,
+                        description: img.description || ''
+                    }))
+                ));
             }
 
-            // 检查本地文件是否实际存在
-            console.log("当前本地文件列表:", localFiles.map(f => f.blobUrl));
+            // 处理本地上传的新图片
+            Object.keys(localImages).forEach((blobUrl, index) => {
+                const image = localImages[blobUrl];
+                if (image.file) {
+                    formDataObj.append(`imageFile_${index}`, image.file);
 
-            // 准备要上传的本地图片 - 直接使用localFiles
-            if (localFiles.length > 0) {
-                // 直接使用localFiles中的图片文件
-                const imagesToUpload = localFiles.map(fileInfo => ({
-                    file: fileInfo.file,
-                    position: fileInfo.position || 0,
-                    name: fileInfo.file.name || '图片',
-                    blobUrl: fileInfo.blobUrl
-                }));
-
-                console.log("准备上传的图片数量:", imagesToUpload.length);
-
-                // 添加本地图片文件到FormData
-                imagesToUpload.forEach((imgData, index) => {
-                    requestData.append(`imageFile_${index}`, imgData.file);
-                    requestData.append(`imageMetadata_${index}`, JSON.stringify({
-                        position: imgData.position,
-                        name: imgData.name
+                    // 添加图片元数据
+                    formDataObj.append(`imageMetadata_${index}`, JSON.stringify({
+                        position: image.position,
+                        description: image.description || ''
                     }));
-                    console.log(`添加到FormData: imageFile_${index}, ${imgData.file.name}`, imgData.file);
-                    console.log(`添加到FormData: imageMetadata_${index}, 位置:${imgData.position}`);
-                });
-            } else {
-                console.log("没有找到需要上传的本地图片");
-            }
-
-            // 如果是编辑模式，添加梦境ID
-            if (isEditMode && existingDream) {
-                requestData.append('id', existingDream.id);
-            }
-
-            // 检查 FormData 是否包含数据 (调试)
-            console.log("FormData内容检查:");
-            let hasImageFiles = false;
-            for (let pair of requestData.entries()) {
-                if (pair[0].startsWith('imageFile_')) {
-                    hasImageFiles = true;
                 }
-                console.log(`FormData包含: ${pair[0]}: ${pair[1].toString().substring(0, 100)}${pair[1].toString().length > 100 ? '...' : ''}`);
-            }
-
-            if (!hasImageFiles && blobImages.length > 0) {
-                console.warn("警告: FormData中没有imageFile字段，但内容中有本地图片!");
-            }
-
-            // 确保使用正确的 token 名称
-            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-            if (!token) {
-                console.error("未找到认证令牌!");
-                throw new Error("认证失败，请重新登录");
-            }
-
-            // 发送请求 - 根据是否为编辑模式选择不同的API端点
-            let response;
-            if (isEditMode) {
-                response = await api.put(`/dreams/${existingDream.id}/`, requestData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-            } else {
-                response = await api.post('/dreams/', requestData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-            }
-
-            // 获取响应数据
-            const dreamData = response.data;
-            let dreamId;
-
-            // 确保获取到梦境ID
-            if (isEditMode && existingDream) {
-                dreamId = existingDream.id;
-            } else if (typeof dreamData === 'object' && dreamData !== null) {
-                dreamId = dreamData.id;
-            } else if (typeof dreamData === 'number' || typeof dreamData === 'string') {
-                dreamId = dreamData;
-            } else if (response.data && response.data.id) {
-                dreamId = response.data.id;
-            } else {
-                console.error("无法获取梦境ID，响应数据:", response.data);
-                throw new Error(isEditMode ? "更新梦境失败：无法获取梦境ID" : "创建梦境失败：无法获取梦境ID");
-            }
-
-            // 释放所有blob URL
-            localFiles.forEach(fileInfo => {
-                URL.revokeObjectURL(fileInfo.blobUrl);
             });
 
-            // 创建标准化的梦境对象用于缓存
+            // 发送请求
+            let response;
+            if (isEditMode) {
+                dreamId = existingDream.id;
+                response = await api.put(`/dreams/${dreamId}/`, formDataObj, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            } else {
+                response = await api.post('/dreams/', formDataObj, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                dreamId = response.data.id;
+            }
+
+            // 处理响应
+            const dreamData = response.data;
+
+            // 检查是否有WebSocket通知信息
+            if (dreamData.images_status && dreamData.images_status.status === 'processing') {
+                // 显示提示信息
+                notification.info(dreamData.images_status.message || '图片正在后台处理中...');
+            }
+
+            // 标准化梦境数据结构
             const normalizedDream = {
                 id: dreamId,
-                title: formData.title.trim(),
-                content: dreamData.content || formData.content, // 优先使用返回的内容
+                title: formData.title,
+                content: formData.content,
                 categories: formData.categories.map(cat => ({
-                    name: cat,
+                    value: cat,
                     display_name: DREAM_CATEGORIES.find(c => c.value === cat)?.label || cat
                 })),
                 tags: {
@@ -608,7 +571,9 @@ const CreatePost = ({ isEditMode = false, existingDream = null }) => {
                 created_at: isEditMode ? existingDream.created_at : new Date().toISOString(),
                 // 合并原始数据和新数据
                 ...(isEditMode ? existingDream : {}),
-                ...(typeof dreamData === 'object' ? dreamData : {})
+                ...(typeof dreamData === 'object' ? dreamData : {}),
+                // 保留WebSocket连接信息(如果有)
+                ...(dreamData.images_status ? { images_status: dreamData.images_status } : {})
             };
 
             // 更新缓存
@@ -617,6 +582,11 @@ const CreatePost = ({ isEditMode = false, existingDream = null }) => {
 
             // 显示成功消息
             notification.success(isEditMode ? '你的梦境已成功更新！' : '你的梦境已成功创建！');
+
+            // 释放所有blob URL
+            localFiles.forEach(fileInfo => {
+                URL.revokeObjectURL(fileInfo.blobUrl);
+            });
 
             // 使用 setTimeout 给 toast 一点时间显示，然后再导航
             setTimeout(() => {
