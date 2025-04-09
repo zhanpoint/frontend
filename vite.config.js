@@ -21,6 +21,12 @@ export default defineConfig({
         target: 'http://localhost:8412',
         changeOrigin: true,
         secure: false,
+      },
+      '/ws': {
+        target: 'ws://localhost:8412',  // WebSocket代理目标
+        ws: true,  // 是否代理WebSocket
+        changeOrigin: true,  // 是否改变原始主机头
+        secure: false,  // 允许使用非安全连接（开发环境常用）
       }
     }
   }

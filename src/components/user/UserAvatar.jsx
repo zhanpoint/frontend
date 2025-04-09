@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Settings, LogOut } from 'lucide-react';
-import { toast } from 'sonner';
+import notification from '@/utils/notification';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -24,7 +24,7 @@ const UserAvatar = () => {
             await logout();
             navigate('/');
         } catch (error) {
-            toast.error('退出登录失败: ' + (error.message || '未知错误'));
+            notification.error('退出登录失败: ' + (error.message || '未知错误'));
         }
     };
 

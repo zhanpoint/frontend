@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { toast } from "sonner";
+import notification from "@/utils/notification";
 
 // 创建Axios实例
 const api = axios.create({
@@ -54,7 +54,7 @@ api.interceptors.response.use(response => response, async error => {
             localStorage.removeItem('user');
 
             // 显示通知提示用户需要重新登录
-            toast.error('登录已过期，请重新登录', {
+            notification.error('登录已过期，请重新登录', {
                 duration: 5000,
                 id: 'auth-expired'  // 避免多次显示相同提示
             });
@@ -71,13 +71,13 @@ api.interceptors.response.use(response => response, async error => {
         // 服务器返回了错误状态码
         switch (error.response.status) {
             case 403:
-                toast.error('没有权限执行此操作', { id: 'error-403' });
+                notification.error('没有权限执行此操作', { id: 'error-403' });
                 break;
             case 404:
-                toast.error('请求的资源不存在', { id: 'error-404' });
+                notification.error('请求的资源不存在', { id: 'error-404' });
                 break;
             case 500:
-                toast.error('服务器内部错误，请稍后再试', { id: 'error-500' });
+                notification.error('服务器内部错误，请稍后再试', { id: 'error-500' });
                 break;
             default:
                 // 其他错误状态不主动显示，由调用方处理
@@ -85,7 +85,7 @@ api.interceptors.response.use(response => response, async error => {
         }
     } else if (error.request) {
         // 请求发出，但没有收到响应
-        toast.error('网络错误，无法连接到服务器', { id: 'network-error' });
+        notification.error('网络错误，无法连接到服务器', { id: 'network-error' });
     }
 
     return Promise.reject(error);

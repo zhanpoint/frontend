@@ -2,24 +2,6 @@ import { DreamCarousel } from './ui/dream-carousel';
 import { SparklesCore } from './ui/sparkles';
 import { DreamGallery } from './ui/infinite-slider';
 
-const carouselSlides = [
-    {
-        title: "探索你的梦境世界",
-        description: "记录、分析和解析你内心深处的梦境，揭示潜意识的奥秘",
-        button: "开始探索",
-    },
-    {
-        title: "梦境的奥秘与解析",
-        description: "每一个梦境都蕴含着丰富的含义，通过记录和分析，了解自己的内心世界",
-        button: "了解更多",
-    },
-    {
-        title: "与社区分享你的梦境",
-        description: "加入我们的梦境社区，分享奇妙的梦境体验，与他人一起探讨",
-        button: "加入社区",
-    }
-];
-
 // 验证并修复图片URL
 const galleryImages = [
     "https://images.unsplash.com/photo-1682905926517-6be3768e29f0?q=80&w=3387&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -33,24 +15,6 @@ const galleryImages = [
 export function DreamIntro() {
     return (
         <div className="w-full overflow-hidden">
-            {/* 第一部分：梦境轮播 */}
-            <section className="relative">
-                <DreamCarousel
-                    slides={carouselSlides}
-                    autoPlay={true}
-                    interval={5000}
-                />
-                <div className="absolute inset-0 pointer-events-none">
-                    <SparklesCore
-                        minSize={1.0}
-                        maxSize={2.0}
-                        particleDensity={60}
-                        className="w-full h-full"
-                        particleColor="#FFFFFF"
-                        speed={10}
-                    />
-                </div>
-            </section>
 
             {/* 第二部分：梦境滚动画廊 */}
             <section className="py-16 bg-black">

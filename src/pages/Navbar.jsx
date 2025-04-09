@@ -205,26 +205,16 @@ const Navbar = ({
 
     // 在用户登录时增加"我的梦境"选项
     const MyDreamsButton = () => {
-        const handleMyDreamsClick = () => {
-            if (isAuthenticated) {
-                // 已登录，导航到我的梦境页面
-                navigate('/my-dreams');
-                // 不需要在这里调用获取梦境的API
-                // MyDreams组件在挂载时会自动调用fetchDreams
-            } else {
-                // 未登录，导航到登录页面
-                navigate('/login', { state: { from: '/my-dreams' } });
-            }
-        };
+        if (!isAuthenticated) return null;
 
         return (
             <Button
                 variant="ghost"
                 size="sm"
                 className="my-dreams-btn"
-                onClick={handleMyDreamsClick}
+                onClick={() => navigate('/my-dreams')}
             >
-                <Moon className="h-4 w-4 text-purple-600" />
+                <Moon className="h-4 w-4" />
                 我的梦境
             </Button>
         );
@@ -281,19 +271,18 @@ const Navbar = ({
                                 <UserAvatar />
                             </div>
                         ) : (
-                            <div className="user-buttons">
-                                <MyDreamsButton />
+                            <div className="auth-buttons">
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     size="sm"
-                                    className="login-button"
+                                    className="login-btn"
                                     onClick={() => navigate('/login')}
                                 >
                                     登录
                                 </Button>
                                 <Button
                                     size="sm"
-                                    className="signup-button"
+                                    className="register-btn"
                                     onClick={() => navigate('/register')}
                                 >
                                     注册
@@ -347,34 +336,18 @@ const Navbar = ({
                                     {/* 移动端用户操作 */}
                                     {!isLoading && (
                                         <div className="mobile-buttons">
-                                            <Button
-                                                variant="ghost"
-                                                className="w-full my-dreams-mobile-btn"
-                                                onClick={() => {
-                                                    if (isAuthenticated) {
-                                                        navigate('/my-dreams');
-                                                        // 不需要在这里调用获取梦境的API
-                                                        // MyDreams组件在挂载时会自动调用fetchDreams
-                                                    } else {
-                                                        navigate('/login', { state: { from: '/my-dreams' } });
-                                                    }
-                                                }}
-                                            >
-                                                <Moon className="mr-2 h-4 w-4 text-purple-400" />
-                                                我的梦境
-                                            </Button>
-
+                                            {isAuthenticated && <MyDreamsButton />}
                                             {!isAuthenticated && (
                                                 <>
                                                     <Button
-                                                        variant="outline"
-                                                        className="login-button"
+                                                        variant="ghost"
+                                                        className="login-btn"
                                                         onClick={() => navigate('/login')}
                                                     >
                                                         登录
                                                     </Button>
                                                     <Button
-                                                        className="signup-button"
+                                                        className="register-btn"
                                                         onClick={() => navigate('/register')}
                                                     >
                                                         注册

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 import { Eye, EyeOff, User, Lock, Phone } from "lucide-react";
-import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import notification from "@/utils/notification";
 import { smsService } from "@/services/notification/sms";
 import { smsAuth } from "@/services/auth/smsAuth";
 import "./css/RegisterForm.css";
@@ -141,7 +143,7 @@ export function RegisterForm() {
             // 成功情况 - 响应码200
             if (response.data.code === 200) {
                 // 显示成功信息
-                toast.success(response.data.message || "验证码发送成功");
+                notification.success(response.data.message || "验证码发送成功");
 
                 // 开始倒计时
                 setCountdown(60);
@@ -160,7 +162,7 @@ export function RegisterForm() {
                     ...errors,
                     phone: response.data.message || "验证码发送可能失败，请稍后再试"
                 });
-                toast.warning(response.data.message || "验证码发送可能失败，请稍后再试");
+                notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
         } catch (error) {
             // 请求失败
@@ -173,22 +175,22 @@ export function RegisterForm() {
                 // 显示后端返回的错误信息
                 if (responseData && responseData.message) {
                     setErrors({ ...errors, phone: responseData.message });
-                    toast.error(responseData.message);
+                    notification.error(responseData.message);
                 } else if (error.response.status === 500) {
                     setErrors({ ...errors, phone: "验证码发送失败，请稍后再试" });
-                    toast.error("服务器内部错误，请稍后再试");
+                    notification.error("服务器内部错误，请稍后再试");
                 } else {
                     setErrors({ ...errors, phone: `请求失败 (${error.response.status})` });
-                    toast.error(`请求失败 (${error.response.status})`);
+                    notification.error(`请求失败 (${error.response.status})`);
                 }
             } else if (error.request) {
                 // 请求发送了但没有收到响应
                 setErrors({ ...errors, phone: "网络错误，请检查您的网络连接" });
-                toast.error("网络错误，请检查您的网络连接");
+                notification.error("网络错误，请检查您的网络连接");
             } else {
                 // 请求设置时发生错误
                 setErrors({ ...errors, phone: "发送请求出错" });
-                toast.error("发送请求出错");
+                notification.error("发送请求出错");
             }
         } finally {
             // 结束加载状态
@@ -238,13 +240,13 @@ export function RegisterForm() {
                 }
 
                 // 显示成功消息
-                toast.success(response.data.message || "注册成功！欢迎加入梦境门户！");
+                notification.success(response.data.message || "注册成功！欢迎加入梦境门户！");
 
                 // 跳转到首页
                 navigate("/");
             } else {
                 // 其他非错误但不是成功的情况
-                toast.warning(response.data.message || "注册过程中出现问题，请稍后重试");
+                notification.warning(response.data.message || "注册过程中出现问题，请稍后重试");
             }
         } catch (error) {
             // 请求失败
@@ -259,22 +261,22 @@ export function RegisterForm() {
                     if (responseData.field) {
                         // 特定字段的错误
                         setErrors({ ...errors, [responseData.field]: responseData.message });
-                        toast.error(`${responseData.field}错误: ${responseData.message}`);
+                        notification.error(`${responseData.field}错误: ${responseData.message}`);
                     } else {
                         // 一般错误
-                        toast.error(responseData.message);
+                        notification.error(responseData.message);
                     }
                 } else if (error.response.status === 500) {
-                    toast.error("服务器内部错误，请稍后重试");
+                    notification.error("服务器内部错误，请稍后重试");
                 } else {
-                    toast.error(`注册失败 (${error.response.status})`);
+                    notification.error(`注册失败 (${error.response.status})`);
                 }
             } else if (error.request) {
                 // 请求发送了但没有收到响应
-                toast.error("网络错误，请检查您的网络连接");
+                notification.error("网络错误，请检查您的网络连接");
             } else {
                 // 请求设置时发生错误
-                toast.error("发送请求出错");
+                notification.error("发送请求出错");
             }
         } finally {
             // 结束加载状态
@@ -283,152 +285,177 @@ export function RegisterForm() {
     };
 
     return (
-        <form className="register-form" onSubmit={handleSubmit}>
-            {/* 用户名 */}
-            <div className="form-field">
-                <label className="form-label" htmlFor="username">
-                    用户名
-                </label>
-                <div className="input-container">
-                    <User className="input-icon" size={18} />
-                    <Input
-                        id="username"
-                        name="username"
-                        type="text"
-                        placeholder="请输入用户名"
-                        value={formData.username}
-                        onChange={handleChange}
-                        className={errors.username ? "input-error" : ""}
-                    />
-                </div>
-                {errors.username && <div className="error-message">{errors.username}</div>}
-            </div>
+        <Card className="w-full max-w-md mx-auto shadow-lg">
+            <CardHeader>
+            </CardHeader>
+            <CardContent>
+                {errors.general && (
+                    <div className="p-3 mb-4 text-sm bg-red-900/20 border border-red-800/30 text-red-400 rounded-md">
+                        {errors.general}
+                    </div>
+                )}
 
-            {/* 密码 */}
-            <div className="form-field">
-                <label className="form-label" htmlFor="password">
-                    密码
-                </label>
-                <div className="input-container">
-                    <Lock className="input-icon" size={18} />
-                    <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="请输入密码"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={errors.password ? "input-error" : ""}
-                    />
-                    <button
-                        type="button"
-                        className="password-toggle"
-                        onClick={() => setShowPassword(!showPassword)}
-                    >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                </div>
-                {errors.password && <div className="error-message">{errors.password}</div>}
-            </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* 用户名输入 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="username">用户名</Label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="username"
+                                name="username"
+                                type="text"
+                                placeholder="请输入用户名"
+                                className={`pl-10 ${errors.username ? "border-red-500" : ""}`}
+                                value={formData.username}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        {errors.username && (
+                            <p className="text-sm text-red-500">{errors.username}</p>
+                        )}
+                    </div>
 
-            {/* 确认密码 */}
-            <div className="form-field">
-                <label className="form-label" htmlFor="confirmPassword">
-                    确认密码
-                </label>
-                <div className="input-container">
-                    <Lock className="input-icon" size={18} />
-                    <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="请再次输入密码"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className={errors.confirmPassword ? "input-error" : ""}
-                    />
-                    <button
-                        type="button"
-                        className="password-toggle"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                </div>
-                {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
-            </div>
+                    {/* 密码输入 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="password">密码</Label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="请输入密码"
+                                className={`pl-10 ${errors.password ? "border-red-500" : ""}`}
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
+                            </Button>
+                        </div>
+                        {errors.password && (
+                            <p className="text-sm text-red-500">{errors.password}</p>
+                        )}
+                    </div>
 
-            {/* 手机号 */}
-            <div className="form-field">
-                <label className="form-label" htmlFor="phone">
-                    手机号
-                </label>
-                <div className="input-container">
-                    <Phone className="input-icon" size={18} />
-                    <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        placeholder="请输入手机号"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className={errors.phone ? "input-error" : ""}
-                    />
-                </div>
-                {errors.phone && <div className="error-message">{errors.phone}</div>}
-            </div>
+                    {/* 确认密码输入 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">确认密码</Label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="请再次输入密码"
+                                className={`pl-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                                {showConfirmPassword ? (
+                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
+                            </Button>
+                        </div>
+                        {errors.confirmPassword && (
+                            <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                        )}
+                    </div>
 
-            {/* 验证码 */}
-            <div className="form-field">
-                <label className="form-label" htmlFor="verificationCode">
-                    验证码
-                </label>
-                <div className="verification-container">
-                    <Input
-                        id="verificationCode"
-                        name="verificationCode"
-                        type="text"
-                        placeholder="请输入验证码"
-                        value={formData.verificationCode}
-                        onChange={handleChange}
-                        className={errors.verificationCode ? "input-error verification-input" : "verification-input"}
-                    />
+                    {/* 手机号输入 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">手机号</Label>
+                        <div className="relative">
+                            <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="phone"
+                                name="phone"
+                                type="text"
+                                placeholder="请输入手机号"
+                                className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
+                                value={formData.phone}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        {errors.phone && (
+                            <p className="text-sm text-red-500">{errors.phone}</p>
+                        )}
+                    </div>
+
+                    {/* 验证码输入 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="verificationCode">验证码</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="verificationCode"
+                                name="verificationCode"
+                                type="text"
+                                placeholder="请输入验证码"
+                                className={`flex-1 ${errors.verificationCode ? "border-red-500" : ""}`}
+                                value={formData.verificationCode}
+                                onChange={handleChange}
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleSendVerificationCode}
+                                disabled={countdown > 0 || isLoading}
+                                className="w-32 flex-shrink-0"
+                            >
+                                {isLoading
+                                    ? "发送中..."
+                                    : countdown > 0
+                                        ? `${countdown}秒后重发`
+                                        : "获取验证码"}
+                            </Button>
+                        </div>
+                        {errors.verificationCode && (
+                            <p className="text-sm text-red-500">{errors.verificationCode}</p>
+                        )}
+                    </div>
+
+                    {/* 注册按钮 */}
                     <Button
-                        type="button"
-                        variant="outline"
-                        className="verification-button"
-                        onClick={handleSendVerificationCode}
-                        disabled={countdown > 0 || isLoading}
+                        type="submit"
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        disabled={isLoading}
                     >
-                        {isLoading
-                            ? "发送中..."
-                            : countdown > 0
-                                ? `${countdown}秒后重发`
-                                : "获取验证码"}
+                        {isLoading ? "注册中..." : "注册"}
+                    </Button>
+                </form>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+                <div className="text-sm text-center text-muted-foreground">
+                    已有账号？
+                    <Button
+                        variant="link"
+                        className="pl-1 text-purple-600"
+                        onClick={() => navigate("/login")}
+                    >
+                        立即登录
                     </Button>
                 </div>
-                {errors.verificationCode && <div className="error-message">{errors.verificationCode}</div>}
-            </div>
-
-            {/* 注册按钮 */}
-            <Button
-                type="submit"
-                className="register-button"
-                disabled={isLoading}
-            >
-                {isLoading ? "注册中..." : "注册"}
-            </Button>
-
-            {/* 登录链接 */}
-            <div className="login-link">
-                已有账号？
-                <a href="/login" onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/login");
-                }}>
-                    立即登录
-                </a>
-            </div>
-        </form>
+            </CardFooter>
+        </Card>
     );
 } 

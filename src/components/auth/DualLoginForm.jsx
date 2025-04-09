@@ -298,7 +298,7 @@ export function DualLoginForm() {
                                     <Label htmlFor="password">密码</Label>
                                     <Button
                                         variant="link"
-                                        className="px-0 text-xs"
+                                        className="px-0 text-xs text-purple-600 hover:text-purple-700"
                                         onClick={handleGoToForgotPassword}
                                     >
                                         忘记密码?

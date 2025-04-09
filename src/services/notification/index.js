@@ -10,10 +10,6 @@ import smsService from './sms';
 export const notificationService = {
     // 短信通知服务
     sms: smsService,
-
-    // 未来可能添加的其他通知服务
-    // email: emailService,
-    // push: pushService
 };
 
 export default notificationService; 

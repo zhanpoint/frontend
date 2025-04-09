@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Register from "./pages/RegisterPage";
 import { LoginPage } from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CreatePost from "./pages/CreatePost";
 import HomePage from "./pages/HomePage";
 import MyDreams from "./pages/MyDreams";
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
     {
         path: "/login",
         element: <LoginPage />,
+    },
+    {
+        path: "/forgot-password",
+        element: <ResetPasswordPage />,
     },
     // 其他路由将在这里添加
 ]);
