@@ -23,11 +23,27 @@ export default defineConfig({
         secure: false,
       },
       '/ws': {
-        target: 'ws://localhost:8412',  // WebSocket代理目标
-        ws: true,  // 是否代理WebSocket
-        changeOrigin: true,  // 是否改变原始主机头
-        secure: false,  // 允许使用非安全连接（开发环境常用）
+        target: 'ws://localhost:8412',
+        ws: true,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('WebSocket代理错误:', err);
+          });
+          proxy.on('proxyReq', (_proxyReq, req, _res) => {
+            console.log('WebSocket代理请求:', req.url);
+          });
+          proxy.on('proxyReqWs', (_proxyReq, req, _socket) => {
+            console.log('WebSocket连接:', req.url);
+          });
+        }
       }
+    },
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost'
     }
   }
 });

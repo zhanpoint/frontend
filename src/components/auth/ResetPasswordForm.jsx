@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
 import passwordReset from "@/services/auth/passwordReset";
 import notification from "@/utils/notification";
+import { smsService } from "@/services/notification/sms";
 import "./css/ResetPasswordForm.css";
 
 /**
@@ -103,13 +104,12 @@ export function ResetPasswordForm() {
             // 开始加载状态
             setIsLoading(true);
 
-            // 使用密码重置服务发送验证码
-            const response = await passwordReset.sendResetCode(formData.phone);
+            // 使用smsService发送验证码，指定重置密码场景
+            const response = await smsService.sendVerificationCode(formData.phone, 'reset_password');
 
-            // 检查响应状态
+            // 成功情况
             if (response.data.code === 200) {
-                // 显示成功信息
-                notification.success(response.data.message || "验证码已发送，请查收短信");
+                notification.success(response.data.message || "验证码发送成功，请查收短信");
 
                 // 开始倒计时
                 setCountdown(60);
@@ -123,11 +123,6 @@ export function ResetPasswordForm() {
                     });
                 }, 1000);
             } else {
-                // 处理非200但也不是错误的情况
-                setErrors({
-                    ...errors,
-                    phone: response.data.message || "验证码发送可能失败，请稍后再试"
-                });
                 notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
         } catch (error) {

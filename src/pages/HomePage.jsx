@@ -59,6 +59,11 @@ const HomePage = () => {
             description: "运用科学方法解读梦境，发现潜意识信息"
         },
         {
+            icon: "🤖",
+            title: "AI解梦助手",
+            description: "专业AI助手为您提供个性化梦境解析与建议"
+        },
+        {
             icon: "👥",
             title: "分享体验",
             description: "与全球梦境爱好者交流，探讨相似体验"

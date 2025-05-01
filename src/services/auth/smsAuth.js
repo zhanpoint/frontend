@@ -44,4 +44,4 @@ export const smsAuth = {
     }
 };
 
-export default smsAuth; 
+export default smsAuth;

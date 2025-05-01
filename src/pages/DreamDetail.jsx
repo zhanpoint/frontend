@@ -241,7 +241,7 @@ const DreamDetail = () => {
 
         if (data.status === 'processing') {
             if (!socketRef.current || !socketRef.current.isProcessingNotified) {
-                notification.info(`图片处理中...${data.progress ? data.progress + '%' : ''}`);
+                notification.info(`图片处理中...`);
                 if (socketRef.current) socketRef.current.isProcessingNotified = true;
             }
         } else if (data.status === 'completed') {
@@ -285,95 +285,56 @@ const DreamDetail = () => {
     const setupWebSocketConnection = useCallback(() => {
         if (!isAuthenticated || !id) return;
 
-        console.log("正在设置WebSocket连接", { dreamId: id });
-
-        // 获取访问令牌
-        const token = tokenManager.getAccessToken();
-
-        if (!token) {
-            notification.error('无法连接到图片处理服务：未授权');
+        // 如果已经有活跃连接，不重新创建
+        if (socketRef.current) {
             return;
         }
 
-        // 确保我们有最新的梦境数据
-        const currentDream = getDreamById(id);
-        if (currentDream && !dream) {
-            console.log("设置WebSocket前更新梦境数据:", currentDream.id);
-            setDream(currentDream);
+        // 获取访问令牌
+        const token = tokenManager.getAccessToken();
+        if (!token) {
+            return;
         }
 
-        // 清理现有连接
-        if (socketRef.current) {
-            socketRef.current.unmount();
-            socketRef.current = null;
-        }
-
-        // 创建WebSocket客户端
-        socketRef.current = new DreamImageWebSocketClient(
-            id,
-            token,
-            handleImageUpdate
-        );
-
-        // 连接WebSocket
-        console.log("开始连接WebSocket");
+        // 创建WebSocket客户端并连接
+        socketRef.current = new DreamImageWebSocketClient(id, token, handleImageUpdate);
         socketRef.current.connect();
-    }, [id, isAuthenticated, getDreamById, dream, setDream, handleImageUpdate]);
+
+        console.log("WebSocket连接已设置: dreamId=", id);
+    }, [id, isAuthenticated, handleImageUpdate]);
 
     // 查找并设置梦境数据
     const findDream = useCallback(async () => {
         // 从已有数据中查找梦境
         const foundDream = getDreamById(id);
-        console.log("DreamDetail: 尝试查找梦境", foundDream ? "成功" : "失败");
 
         if (foundDream) {
             setDream(foundDream);
             setError(null);
             setLoading(false);
 
-            // 检查是否有图片正在处理
-            if (foundDream.images_status && foundDream.images_status.status === 'processing') {
-                if (!socketRef.current) {
-                    setupWebSocketConnection();
-                    notification.info('图片正在处理中...');
-                }
-            }
-
-            // 即使没有明确的images_status，也尝试连接WebSocket
-            // 这是为了处理从编辑页面返回的情况
-            else if (isAuthenticated && !socketRef.current) {
+            // 确保WebSocket连接已建立
+            if (isAuthenticated) {
                 setupWebSocketConnection();
             }
         } else {
-            // 只设置UI错误消息，不使用notification显示
             setError("找不到该梦境记录");
             setLoading(false);
         }
     }, [id, getDreamById, isAuthenticated, setupWebSocketConnection]);
 
-    // 当组件挂载或ID更改时，从上下文中获取梦境
+    // 当组件挂载或ID更改时，获取梦境数据
     useEffect(() => {
-        console.log("DreamDetail: useEffect触发", {
-            id,
-            authLoading,
-            isAuthenticated,
-            dreamsCount: dreams.length,
-            dreamsLoading
-        });
-
         // 确保认证状态已加载
         if (!authLoading) {
             if (!isAuthenticated) {
-                // 未登录，重定向到登录页
                 navigate('/login', { state: { from: `/dreams/${id}` } });
                 return;
             }
 
             // 梦境数据为空时尝试获取
             if (dreams.length === 0 && !dreamsLoading) {
-                console.log("DreamDetail: 梦境列表为空，发起获取请求");
                 fetchDreams().then(() => {
-                    console.log("DreamDetail: 获取梦境数据完成，再次尝试查找");
                     findDream();
                 });
             } else if (!dreamsLoading) {

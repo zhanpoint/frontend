@@ -6,15 +6,6 @@ import api from '../api';
  */
 const passwordReset = {
     /**
-     * 发送重置密码验证码
-     * @param {string} phone - 手机号
-     * @returns {Promise} - API响应
-     */
-    sendResetCode: (phone) => {
-        return api.post('/sms/send-verification-code/', { phone });
-    },
-
-    /**
      * 重置密码
      * @param {string} phone - 手机号
      * @param {string} code - 验证码

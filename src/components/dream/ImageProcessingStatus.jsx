@@ -1,13 +1,12 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, CircleSlash, LoaderCircle, Image } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Progress } from '@/components/ui/progress';
 
 /**
  * 图片处理状态组件
  * 显示图片处理的不同状态：处理中、完成、失败
  */
-const ImageProcessingStatus = ({ status, progress = 0, message }) => {
+const ImageProcessingStatus = ({ status, message }) => {
     // 状态配置 - 不同状态对应不同的图标、颜色和标题
     const statusConfig = {
         idle: {
@@ -72,21 +71,6 @@ const ImageProcessingStatus = ({ status, progress = 0, message }) => {
                         )}
                     </div>
                 </div>
-
-                {status === 'processing' && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="mt-2"
-                    >
-                        <Progress
-                            value={progress}
-                            className="h-1.5 bg-blue-950"
-                            indicatorClassName="bg-blue-400"
-                        />
-                        <p className="text-xs text-gray-400 mt-1 text-right">{progress}%</p>
-                    </motion.div>
-                )}
             </motion.div>
         </AnimatePresence>
     );

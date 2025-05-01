@@ -135,8 +135,8 @@ export function DualLoginForm() {
             // 开始加载状态
             setIsLoading(true);
 
-            // 使用smsService发送验证码
-            const response = await smsService.sendVerificationCode(smsForm.phone);
+            // 使用smsService发送验证码，指定登录场景
+            const response = await smsService.sendVerificationCode(smsForm.phone, 'login');
 
             // 成功情况
             if (response.data.code === 200) {

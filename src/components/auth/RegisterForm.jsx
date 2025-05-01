@@ -134,8 +134,8 @@ export function RegisterForm() {
             // 开始加载状态
             setIsLoading(true);
 
-            // 使用smsService发送验证码
-            const response = await smsService.sendVerificationCode(formData.phone);
+            // 使用smsService发送验证码，指定注册场景
+            const response = await smsService.sendVerificationCode(formData.phone, 'register');
 
             // 检查响应状态和消息
             console.log("验证码请求响应:", response.data);
