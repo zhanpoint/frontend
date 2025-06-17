@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Phone } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/Button";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Label } from "@/components/ui/label.jsx";
 import passwordReset from "@/services/auth/passwordReset";
 import notification from "@/utils/notification";
 import { smsService } from "@/services/notification/sms";

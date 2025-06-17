@@ -8,10 +8,8 @@ import {
     Moon,
     Calendar,
     Clock,
-    Tag as TagIcon,
     MapPin,
     Users,
-    Hash,
     ArrowLeft,
     Bookmark,
     Star,
@@ -25,44 +23,101 @@ import {
     CardContent,
     CardFooter,
     CardHeader,
-    CardTitle,
-    CardDescription
-} from "@/components/ui/card";
+    CardTitle
+} from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.jsx";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
 import notification from "@/utils/notification";
 import DreamImageWebSocketClient from '@/services/webSocket/DreamImageWebSocketClient.js';
-import { motion, AnimatePresence } from 'framer-motion';
 import "./css/DreamDetail.css";
 
-// 梦境分类颜色映射
-const CATEGORY_COLORS = {
-    normal: "bg-gray-500",
-    memorable: "bg-blue-500",
-    indicate: "bg-cyan-500",
-    archetypal: "bg-purple-500",
-    lucid: "bg-green-500",
-    nightmare: "bg-red-500",
-    repeating: "bg-yellow-500",
-    sleep_paralysis: "bg-indigo-500"
+// 常量配置对象
+const CONFIG = {
+    categories: {
+        normal: "bg-gray-500", memorable: "bg-blue-500", indicate: "bg-cyan-500",
+        archetypal: "bg-purple-500", lucid: "bg-green-500", nightmare: "bg-red-500",
+        repeating: "bg-yellow-500", sleep_paralysis: "bg-indigo-500"
+    },
+    tags: {
+        theme: { icon: <Palette className="h-3 w-3" />, class: "dream-tag-theme" },
+        character: { icon: <Users className="h-3 w-3" />, class: "dream-tag-character" },
+        location: { icon: <MapPin className="h-3 w-3" />, class: "dream-tag-location" }
+    },
+    tooltips: [
+        { tip: '收藏梦境', icon: <Star /> },
+        { tip: '添加书签', icon: <Bookmark /> },
+        { tip: '分享梦境', icon: <Share2 /> }
+    ]
 };
 
-// 标签类型图标映射
-const TAG_ICONS = {
-    theme: <Palette className="h-3 w-3" />,
-    character: <Users className="h-3 w-3" />,
-    location: <MapPin className="h-3 w-3" />
+// 格式化工具函数
+const formatUtils = {
+    date: dateString => {
+        if (!dateString) return "未知日期";
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+    },
+    time: dateString => {
+        if (!dateString) return "未知时间";
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
 };
 
-// 标签类型颜色映射
-const TAG_COLORS = {
-    theme: "dream-tag-theme",
-    character: "dream-tag-character",
-    location: "dream-tag-location"
+// Markdown渲染组件
+const MarkdownRenderer = ({ content }) => {
+    const markdownComponents = {
+        img: ({ node, ...props }) => {
+            const isValidUrl = props.src && (props.src.startsWith('http') || props.src.startsWith('data:'));
+
+            if (!isValidUrl) {
+                return (
+                    <div className="flex items-center justify-center bg-red-900/20 border border-red-800/50 rounded-md p-4 my-4">
+                        <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+                        <span className="text-sm text-red-300">图片加载失败</span>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="relative rounded-md overflow-hidden transition-all duration-300 hover:shadow-md hover:shadow-purple-900/30">
+                    <img
+                        {...props}
+                        className="rounded-md max-w-full transition-all duration-300 hover:scale-[1.01]"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '';
+                            e.target.alt = '图片加载失败';
+                            e.target.className = 'hidden';
+                            e.target.parentNode.classList.add('img-error');
+                        }}
+                        loading="lazy"
+                        alt={props.alt || "梦境图片"}
+                    />
+                </div>
+            );
+        },
+        h1: ({ ...props }) => <h1 className="text-2xl font-bold text-purple-100 my-4" {...props} />,
+        h2: ({ ...props }) => <h2 className="text-xl font-bold text-purple-200 my-3" {...props} />,
+        h3: ({ ...props }) => <h3 className="text-lg font-bold text-purple-300 my-2" {...props} />,
+        h4: ({ ...props }) => <h4 className="text-base font-bold text-purple-400 my-2" {...props} />,
+        p: ({ ...props }) => <p className="my-2 text-gray-200" {...props} />,
+        ul: ({ ...props }) => <ul className="list-disc pl-6 my-4 space-y-1" {...props} />,
+        ol: ({ ...props }) => <ol className="list-decimal pl-6 my-4 space-y-1" {...props} />,
+        li: ({ ...props }) => <li className="text-gray-300" {...props} />,
+        blockquote: ({ ...props }) => <blockquote className="border-l-4 border-purple-600 pl-4 italic text-gray-400 my-4" {...props} />,
+        a: ({ ...props }) => <a className="text-blue-400 hover:text-blue-300 underline" {...props} />
+    };
+
+    return (
+        <div className="dream-content text-gray-100 leading-relaxed prose prose-invert prose-sm max-w-none">
+            <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>
+        </div>
+    );
 };
 
 /**
@@ -76,143 +131,19 @@ const DreamDetail = () => {
     const [dream, setDream] = useState(null);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // WebSocket引用
     const socketRef = useRef(null);
-    // 防抖引用
     const updateContentDebounceRef = useRef(null);
 
-    // 统一的梦境内容更新函数 - 处理图片插入逻辑
+    // 处理图片更新并更新内容
     const processImagesUpdate = useCallback((images) => {
-        console.log("准备处理图片更新:", {
-            imagesCount: images?.length,
-            hasDream: !!dream,
-            dreamId: id
-        });
+        if (!images?.length) return false;
 
-        // 如果没有图片数据，直接返回
-        if (!images || images.length === 0) {
-            console.warn("没有图片数据，无法更新内容");
-            return;
-        }
-
-        // 获取最新的梦境数据
-        const getDreamData = () => {
-            // 首先从Context获取最新数据
-            const currentDream = getDreamById(id);
-
-            if (currentDream) {
-                console.log("获取到最新梦境数据:", currentDream.id);
-                // 更新组件状态
-                setDream(currentDream);
-                return currentDream;
-            }
-
-            // 如果Context没有数据，使用当前状态
-            if (dream) {
-                return dream;
-            }
-
-            return null;
-        };
-
-        // 执行实际的内容更新
-        const updateContent = (dreamData) => {
-            if (!dreamData) {
-                console.error("无法获取梦境数据");
-                return false;
-            }
-
-            try {
-                // 复制当前梦境数据，避免直接修改状态
-                const updatedDream = { ...dreamData };
-
-                // 按位置排序图片
-                const sortedImages = [...images].sort((a, b) => a.position - b.position);
-                console.log("排序后的图片顺序:", sortedImages);
-
-                // 从内容中移除所有图片占位符或者处理中的图片标记
-                let content = updatedDream.content;
-
-                // 确保内容不为空
-                if (!content) content = "";
-
-                // 计算并更新内容
-                let offset = 0;
-
-                for (const image of sortedImages) {
-                    if (!image.url) {
-                        console.warn("图片URL为空，跳过插入:", image);
-                        continue;
-                    }
-
-                    const position = image.position + offset;
-                    const imageMarkdown = `![梦境图片](${image.url})`;
-
-                    console.log(`插入图片到位置 ${position}: ${image.url}`);
-
-                    if (position <= content.length) {
-                        // 在指定位置插入图片
-                        content = content.substring(0, position) + imageMarkdown + content.substring(position);
-                        offset += imageMarkdown.length;
-                    } else {
-                        // 如果位置超出内容长度，附加到末尾
-                        console.warn(`插入位置 ${position} 超出内容长度 ${content.length}, 附加到末尾`);
-                        if (!content.endsWith('\n\n')) {
-                            content += content.endsWith('\n') ? '\n' : '\n\n';
-                        }
-                        content += imageMarkdown;
-                    }
-                }
-
-                // 更新内容
-                updatedDream.content = content;
-
-                // 打印日志
-                console.log("更新后的梦境内容:",
-                    content.length > 100 ?
-                        content.substring(0, 100) + '...' :
-                        content
-                );
-
-                // 更新状态
-                setDream(updatedDream);
-
-                // 更新缓存
-                addOrUpdateDream(updatedDream);
-
-                // 保存到本地存储
-                const localDreams = JSON.parse(localStorage.getItem('dreams') || '[]');
-                const updatedLocalDreams = localDreams.map(d =>
-                    d.id === updatedDream.id ? { ...d, content: updatedDream.content } : d
-                );
-                localStorage.setItem('dreams', JSON.stringify(updatedLocalDreams));
-
-                // 显示成功通知
-                notification.success('图片处理完成！已成功添加到您的梦境记录中');
-
-                return true;
-            } catch (error) {
-                console.error("更新梦境内容时出错:", error);
-                notification.error('更新梦境内容失败');
-                return false;
-            }
-        };
-
-        // 获取最新梦境数据并更新
-        const currentDream = getDreamData();
-        if (currentDream) {
-            // 直接使用最新数据更新
-            return updateContent(currentDream);
-        } else {
-            // 如果无法获取数据，重新获取
-            console.log("无法获取梦境数据，尝试重新获取...");
+        const dreamData = getDreamById(id) || dream;
+        if (!dreamData) {
             fetchDreams().then(() => {
                 const freshDream = getDreamById(id);
                 if (freshDream) {
-                    console.log("重新获取到梦境数据:", freshDream.id);
                     setDream(freshDream);
-                    // 短暂延迟确保状态更新
                     setTimeout(() => updateContent(freshDream), 100);
                 } else {
                     notification.error('无法加载梦境数据');
@@ -220,280 +151,150 @@ const DreamDetail = () => {
             });
             return false;
         }
-    }, [dream, id, getDreamById, fetchDreams, setDream, addOrUpdateDream]);
 
-    // 图片更新处理函数
+        // 更新内容中的图片
+        const updateContent = (dreamData) => {
+            if (!dreamData) return false;
+            try {
+                const updatedDream = { ...dreamData };
+                const sortedImages = [...images].sort((a, b) => a.position - b.position);
+                let content = updatedDream.content || "";
+                let offset = 0;
+
+                for (const image of sortedImages) {
+                    if (!image.url) continue;
+                    const position = image.position + offset;
+                    const imageMarkdown = `![梦境图片](${image.url})`;
+
+                    if (position <= content.length) {
+                        content = content.substring(0, position) + imageMarkdown + content.substring(position);
+                        offset += imageMarkdown.length;
+                    } else {
+                        const newLinePrefix = !content.endsWith('\n\n') ? (content.endsWith('\n') ? '\n' : '\n\n') : '';
+                        content += newLinePrefix + imageMarkdown;
+                    }
+                }
+
+                updatedDream.content = content;
+                setDream(updatedDream);
+                addOrUpdateDream(updatedDream);
+                notification.success('图片处理完成！已成功添加到您的梦境记录中');
+                return true;
+            } catch {
+                notification.error('更新梦境内容失败');
+                return false;
+            }
+        };
+
+        return updateContent(dreamData);
+    }, [dream, id, getDreamById, fetchDreams, addOrUpdateDream]);
+
+    // WebSocket消息处理
     const handleImageUpdate = useCallback((data) => {
-        console.log("收到WebSocket图片更新消息:", data);
+        if (data.dream_id !== parseInt(id)) return;
 
-        // 确保只处理当前查看的梦境的消息
-        if (data.dream_id !== parseInt(id)) {
-            console.log(`收到的消息梦境ID(${data.dream_id})与当前查看的梦境ID(${id})不匹配，忽略此消息`);
-            return;
-        }
-
-        // 确保我们始终有最新的梦境数据
         const latestDream = getDreamById(id);
         if (latestDream && (!dream || dream.id !== latestDream.id)) {
-            console.log("更新梦境数据为最新状态:", latestDream.id);
             setDream(latestDream);
         }
 
-        if (data.status === 'processing') {
-            if (!socketRef.current || !socketRef.current.isProcessingNotified) {
-                notification.info(`图片处理中...`);
-                if (socketRef.current) socketRef.current.isProcessingNotified = true;
-            }
-        } else if (data.status === 'completed') {
-            if (socketRef.current) socketRef.current.isProcessingNotified = false;
-            // 更新梦境内容，将图片插入到正确位置
-            if (data.images && data.images.length > 0) {
-                console.log("准备更新梦境内容，添加图片:", data.images);
-
-                // 使用防抖函数来确保状态稳定后再更新内容
-                // 这样可以避免可能的竞态条件
-                if (updateContentDebounceRef.current) {
-                    clearTimeout(updateContentDebounceRef.current);
+        const statusHandlers = {
+            processing: () => {
+                if (!socketRef.current?.isProcessingNotified) {
+                    notification.info(`图片处理中...`);
+                    if (socketRef.current) socketRef.current.isProcessingNotified = true;
                 }
+            },
+            completed: () => {
+                if (socketRef.current) socketRef.current.isProcessingNotified = false;
+                if (data.images?.length > 0) {
+                    if (updateContentDebounceRef.current) clearTimeout(updateContentDebounceRef.current);
+                    updateContentDebounceRef.current = setTimeout(() => processImagesUpdate(data.images), 500);
+                } else {
+                    notification.success('图片处理完成');
+                }
+            },
+            failed: () => {
+                if (socketRef.current) socketRef.current.isProcessingNotified = false;
+                notification.error(data.message || '图片处理失败');
+            },
+            delete_processing: () => notification.info(data.message || `正在删除图片...`),
+            delete_completed: () => notification.success(data.message || '图片已成功删除'),
+            delete_failed: () => notification.error(data.message || '删除图片时出现错误')
+        };
 
-                // 延迟略微长一点，确保梦境数据已加载
-                updateContentDebounceRef.current = setTimeout(() => {
-                    processImagesUpdate(data.images);
-                }, 500);
-            } else {
-                console.warn("收到completed状态但没有图片数据");
-                notification.success('图片处理完成');
-            }
-        } else if (data.status === 'failed') {
-            if (socketRef.current) socketRef.current.isProcessingNotified = false;
-            notification.error(data.message || '图片处理失败');
-        } else if (data.status === 'delete_processing') {
-            // 处理图片删除进度消息
-            notification.info(data.message || `正在删除图片...${data.progress || 0}%`);
-        } else if (data.status === 'delete_completed') {
-            // 处理图片删除完成消息
-            notification.success(data.message || '图片已成功删除');
-            // 如果当前仍在同一页面，可以通知用户或更新UI
-            // 但通常图片删除时页面已经导航离开
-        } else if (data.status === 'delete_failed') {
-            // 处理图片删除失败消息
-            notification.error(data.message || '删除图片时出现错误');
-        }
+        const handler = statusHandlers[data.status];
+        if (handler) handler();
     }, [id, getDreamById, dream, setDream, processImagesUpdate]);
 
     // 设置WebSocket连接
     const setupWebSocketConnection = useCallback(() => {
-        if (!isAuthenticated || !id) return;
+        if (!isAuthenticated || !id || socketRef.current) return;
 
-        // 如果已经有活跃连接，不重新创建
-        if (socketRef.current) {
-            return;
-        }
-
-        // 获取访问令牌
         const token = tokenManager.getAccessToken();
-        if (!token) {
-            return;
-        }
+        if (!token) return;
 
-        // 创建WebSocket客户端并连接
         socketRef.current = new DreamImageWebSocketClient(id, token, handleImageUpdate);
         socketRef.current.connect();
-
-        console.log("WebSocket连接已设置: dreamId=", id);
     }, [id, isAuthenticated, handleImageUpdate]);
 
     // 查找并设置梦境数据
-    const findDream = useCallback(async () => {
-        // 从已有数据中查找梦境
+    const findDream = useCallback(() => {
         const foundDream = getDreamById(id);
-
         if (foundDream) {
             setDream(foundDream);
             setError(null);
             setLoading(false);
-
-            // 确保WebSocket连接已建立
-            if (isAuthenticated) {
-                setupWebSocketConnection();
-            }
+            if (isAuthenticated) setupWebSocketConnection();
         } else {
             setError("找不到该梦境记录");
             setLoading(false);
         }
     }, [id, getDreamById, isAuthenticated, setupWebSocketConnection]);
 
-    // 当组件挂载或ID更改时，获取梦境数据
+    // 组合多个useEffect，统一处理组件生命周期
     useEffect(() => {
-        // 确保认证状态已加载
-        if (!authLoading) {
-            if (!isAuthenticated) {
-                navigate('/login', { state: { from: `/dreams/${id}` } });
-                return;
-            }
+        if (authLoading) return;
 
-            // 梦境数据为空时尝试获取
-            if (dreams.length === 0 && !dreamsLoading) {
-                fetchDreams().then(() => {
-                    findDream();
-                });
-            } else if (!dreamsLoading) {
-                findDream();
-            }
+        // 认证检查
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: `/dreams/${id}` } });
+            return;
         }
-    }, [id, authLoading, isAuthenticated, dreams, dreamsLoading, navigate, fetchDreams, findDream]);
 
-    // 组件卸载时关闭WebSocket
-    useEffect(() => {
-        return () => {
-            if (socketRef.current) {
-                console.log("组件卸载，关闭WebSocket连接");
-                socketRef.current.unmount();
-                socketRef.current = null;
-            }
-        };
-    }, []);
-
-    // 重试图片处理
-    const retryImageProcessing = useCallback(() => {
-        // 这里应该调用后端API来请求重新处理图片
-        notification.info('正在请求重新处理图片...');
-        // 假设这里会有一个API调用
-        // TODO: 实现重试处理API
-    }, []);
-
-    // 查询梦境数据，并检查图片处理状态
-    useEffect(() => {
-        if (!authLoading && isAuthenticated && id) {
-            // 查找梦境数据
+        // 加载梦境数据
+        if (dreams.length === 0 && !dreamsLoading) {
+            fetchDreams().then(findDream);
+        } else if (!dreamsLoading) {
             findDream();
+        }
+
+        // 检查图片处理状态
+        if (dream && isAuthenticated && id) {
+            const needsImageProcessing = dream.images_status?.status === 'processing' ||
+                dream.content?.includes('![正在处理图片...]');
+            if (needsImageProcessing) setupWebSocketConnection();
         }
 
         // 清理函数
         return () => {
-            // 组件卸载时清理WebSocket连接
             if (socketRef.current) {
-                console.log("清理WebSocket连接");
                 socketRef.current.unmount();
                 socketRef.current = null;
             }
-
-            // 清理定时器
             if (updateContentDebounceRef.current) {
                 clearTimeout(updateContentDebounceRef.current);
             }
         };
-    }, [id, isAuthenticated, authLoading, findDream]);
+    }, [
+        id, authLoading, isAuthenticated, dreams, dreamsLoading,
+        navigate, fetchDreams, findDream, dream, setupWebSocketConnection
+    ]);
 
-    // 检查梦境数据是否有WebSocket连接信息，有则建立连接
-    useEffect(() => {
-        // 如果有梦境数据
-        if (dream && isAuthenticated && id) {
-            // 检查是否需要处理图片
-            const needsImageProcessing =
-                // 1. 显式的images_status标记
-                (dream.images_status && dream.images_status.status === 'processing') ||
-                // 2. 内容中包含图片占位符
-                (dream.content && dream.content.includes('![正在处理图片...]'));
-
-            if (needsImageProcessing) {
-                console.log("检测到图片正在处理中，建立WebSocket连接");
-                setupWebSocketConnection();
-            }
-        }
-    }, [dream, isAuthenticated, id, setupWebSocketConnection]);
-
-    // 格式化日期
-    const formatDate = (dateString) => {
-        if (!dateString) return "未知日期";
-        const date = new Date(dateString);
-        return date.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
-    // 格式化时间
-    const formatTime = (dateString) => {
-        if (!dateString) return "未知时间";
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('zh-CN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    // 自定义组件用于渲染Markdown内容
-    const MarkdownWithPlaceholders = ({ content }) => {
-        return (
-            <div className="dream-content text-gray-100 leading-relaxed prose prose-invert prose-sm max-w-none">
-                <ReactMarkdown
-                    components={{
-                        img: ({ node, ...props }) => {
-                            // 检查图片URL是否有效
-                            const isValidUrl = props.src && (
-                                props.src.startsWith('http://') ||
-                                props.src.startsWith('https://') ||
-                                props.src.startsWith('data:')
-                            );
-
-                            // 无效URL时显示错误提示
-                            if (!isValidUrl) {
-                                return (
-                                    <div className="image-error flex items-center justify-center bg-red-900/20 border border-red-800/50 rounded-md p-4 my-4">
-                                        <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                                        <span className="text-sm text-red-300">图片加载失败</span>
-                                    </div>
-                                );
-                            }
-
-                            // 正常图片，添加错误处理和加载状态
-                            return (
-                                <div className="image-wrapper relative rounded-md overflow-hidden transition-all duration-300 hover:shadow-md hover:shadow-purple-900/30">
-                                    <img
-                                        {...props}
-                                        className="rounded-md max-w-full transition-all duration-300 hover:scale-[1.01]"
-                                        onError={(e) => {
-                                            console.error("图片加载失败:", e.target.src);
-                                            e.target.onerror = null;
-                                            e.target.src = ''; // 清除src以防止循环请求
-                                            e.target.alt = '图片加载失败';
-                                            e.target.className = 'hidden';
-                                            e.target.parentNode.classList.add('img-error');
-                                        }}
-                                        loading="lazy"
-                                        alt={props.alt || "梦境图片"}
-                                    />
-                                </div>
-                            );
-                        }
-                    }}
-                >
-                    {content}
-                </ReactMarkdown>
-            </div>
-        );
-    };
-
-    // 渲染梦境详细内容
-    const renderDreamContent = () => {
-        if (!dream) return null;
-
-        return (
-            <div className="dream-content-container">
-                <div className="dream-body relative">
-                    {/* Markdown渲染器展示内容 */}
-                    <MarkdownWithPlaceholders content={dream.content} />
-                </div>
-            </div>
-        );
-    };
-
-    // 渲染错误状态
+    // 错误状态UI
     if (error) {
         return (
-            <div className="dream-detail-container max-w-4xl mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-3">
                         <Moon className="h-8 w-8 text-purple-400" />
@@ -513,21 +314,15 @@ const DreamDetail = () => {
                 <Alert variant="destructive" className="mb-6">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>获取梦境失败</AlertTitle>
-                    <AlertDescription>
-                        {error}
-                    </AlertDescription>
+                    <AlertDescription>{error}</AlertDescription>
                 </Alert>
 
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Button
                         onClick={() => {
-                            // 设置加载状态并清除之前的错误
                             setError(null);
                             setLoading(true);
-                            // 重新获取梦境数据
-                            fetchDreams().then(() => {
-                                findDream();
-                            });
+                            fetchDreams().then(findDream);
                         }}
                     >
                         重新获取数据
@@ -537,10 +332,10 @@ const DreamDetail = () => {
         );
     }
 
-    // 渲染加载状态
+    // 加载状态UI
     if (loading || authLoading || dreamsLoading || !dream) {
         return (
-            <div className="dream-detail-container max-w-4xl mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
                 <div className="flex items-center gap-3 mb-8">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <Skeleton className="h-8 w-48" />
@@ -556,38 +351,30 @@ const DreamDetail = () => {
                         <Skeleton className="h-4 w-40" />
                     </CardHeader>
                     <CardContent>
-                        <Skeleton className="h-4 w-full mb-3" />
-                        <Skeleton className="h-4 w-full mb-3" />
-                        <Skeleton className="h-4 w-full mb-3" />
+                        {[...Array(3)].map((_, i) => (
+                            <Skeleton key={i} className="h-4 w-full mb-3" />
+                        ))}
                         <Skeleton className="h-4 w-3/4 mb-6" />
-
                         <Skeleton className="h-56 w-full mb-8 rounded-lg" />
 
-                        <div className="space-y-6">
-                            <div>
+                        {[...Array(2)].map((_, i) => (
+                            <div key={i} className="mb-6">
                                 <Skeleton className="h-5 w-32 mb-2" />
                                 <div className="flex gap-2">
                                     <Skeleton className="h-6 w-16" />
                                     <Skeleton className="h-6 w-16" />
                                 </div>
                             </div>
-
-                            <div>
-                                <Skeleton className="h-5 w-32 mb-2" />
-                                <div className="flex gap-2">
-                                    <Skeleton className="h-6 w-16" />
-                                    <Skeleton className="h-6 w-16" />
-                                </div>
-                            </div>
-                        </div>
+                        ))}
                     </CardContent>
                 </Card>
             </div>
         );
     }
 
+    // 正常渲染UI
     return (
-        <div className="dream-detail-container max-w-4xl mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <Moon className="h-8 w-8 text-purple-400" />
@@ -609,76 +396,50 @@ const DreamDetail = () => {
                     <div className="flex justify-between items-start">
                         <CardTitle className="text-2xl font-bold text-purple-50 dream-title">{dream.title}</CardTitle>
                         <div className="flex space-x-1">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-yellow-400 hover:bg-gray-800/60">
-                                            <Star className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>收藏梦境</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-800/60">
-                                            <Bookmark className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>添加书签</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-gray-800/60">
-                                            <Share2 className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>分享梦境</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            {CONFIG.tooltips.map(({ tip, icon }, i) => (
+                                <TooltipProvider key={i}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-800/60">
+                                                {icon}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>{tip}</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="dream-metadata flex flex-col space-y-3 mt-3">
+                    <div className="flex flex-col space-y-3 mt-3">
                         {/* 分类标签 */}
-                        <div className="flex flex-wrap gap-2">
-                            {dream.categories && dream.categories.map(category => (
-                                <Badge
-                                    key={category.id || category.name}
-                                    className={`${CATEGORY_COLORS[category.name] || 'bg-gray-500'} text-xs px-2 py-1 category-badge`}
-                                >
-                                    {category.display_name}
-                                </Badge>
-                            ))}
-                        </div>
+                        {dream.categories?.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {dream.categories.map(category => (
+                                    <Badge
+                                        key={category.id || category.name}
+                                        className={`${CONFIG.categories[category.name] || 'bg-gray-500'} text-xs px-2 py-1 category-badge`}
+                                    >
+                                        {category.display_name}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
 
-                        {/* 标签区域 - 水平展示 */}
-                        {dream.tags && Object.entries(dream.tags).some(([type, tags]) => tags && tags.length > 0) && (
-                            <div className="tags-container flex flex-wrap gap-2 mt-1">
+                        {/* 标签区域 */}
+                        {dream.tags && Object.entries(dream.tags).some(([_, tags]) => tags?.length > 0) && (
+                            <div className="flex flex-wrap gap-2 mt-1">
                                 {Object.entries(dream.tags).map(([type, tags]) =>
-                                    tags && tags.length > 0 ? (
-                                        tags.map((tag, index) => (
-                                            <Badge
-                                                key={`${type}-${index}`}
-                                                variant="outline"
-                                                className={`tag-badge ${TAG_COLORS[type]}`}
-                                            >
-                                                <span className="tag-icon mr-1">{TAG_ICONS[type]}</span>
-                                                <span>{tag}</span>
-                                            </Badge>
-                                        ))
-                                    ) : null
+                                    tags?.length > 0 && tags.map((tag, index) => (
+                                        <Badge
+                                            key={`${type}-${index}`}
+                                            variant="outline"
+                                            className={`tag-badge ${CONFIG.tags[type]?.class}`}
+                                        >
+                                            <span className="mr-1">{CONFIG.tags[type]?.icon}</span>
+                                            <span>{tag}</span>
+                                        </Badge>
+                                    ))
                                 )}
                             </div>
                         )}
@@ -687,11 +448,11 @@ const DreamDetail = () => {
                         <div className="flex items-center text-sm text-gray-400 mt-1 justify-between">
                             <div className="flex items-center">
                                 <Calendar className="h-4 w-4 mr-1" />
-                                <span>{formatDate(dream.created_at)}</span>
+                                <span>{formatUtils.date(dream.created_at)}</span>
                             </div>
                             <div className="flex items-center">
                                 <Clock className="h-4 w-4 mr-1" />
-                                <span>{formatTime(dream.created_at)}</span>
+                                <span>{formatUtils.time(dream.created_at)}</span>
                             </div>
                         </div>
                     </div>
@@ -701,11 +462,15 @@ const DreamDetail = () => {
                     {/* 梦境内容分割线 */}
                     <div className="border-t border-gray-800/70 my-3"></div>
 
-                    {/* 渲染梦境详细内容 */}
-                    {renderDreamContent()}
+                    {/* 梦境内容 */}
+                    <div className="dream-content-container">
+                        <div className="dream-body relative">
+                            <MarkdownRenderer content={dream.content} />
+                        </div>
+                    </div>
 
                     {/* 解梦提示 */}
-                    <div className="dream-interpretation bg-purple-900/20 border border-purple-700/30 p-4 rounded-lg mt-6">
+                    <div className="bg-purple-900/20 border border-purple-700/30 p-4 rounded-lg mt-6 dream-interpretation">
                         <div className="flex items-center mb-2">
                             <HelpCircle className="h-5 w-5 text-purple-400 mr-2" />
                             <h3 className="text-md font-medium text-purple-300">解梦提示</h3>
@@ -717,7 +482,7 @@ const DreamDetail = () => {
                 </CardContent>
 
                 <CardFooter className="flex justify-between items-center pt-4 border-t border-gray-800">
-                    <div className="dream-author flex items-center">
+                    <div className="flex items-center">
                         <Avatar className="h-8 w-8 mr-2">
                             <AvatarImage src="/assets/user-avatar.png" alt="用户头像" />
                             <AvatarFallback>用户</AvatarFallback>
@@ -727,16 +492,14 @@ const DreamDetail = () => {
                             <p className="text-xs text-gray-500">私密记录 · 仅自己可见</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs border-gray-700 hover:bg-gray-800"
-                            onClick={() => navigate(`/edit-dream/${dream.id}`)}
-                        >
-                            编辑梦境
-                        </Button>
-                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-gray-700 hover:bg-gray-800"
+                        onClick={() => navigate(`/edit-dream/${dream.id}`)}
+                    >
+                        编辑梦境
+                    </Button>
                 </CardFooter>
             </Card>
         </div>

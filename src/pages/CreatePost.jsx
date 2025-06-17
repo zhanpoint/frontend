@@ -17,22 +17,22 @@ import notification from "@/utils/notification";
 import api from "../services/api";
 import { useDreams } from "@/contexts/DreamsContext";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
+import { Badge } from "@/components/ui/badge.jsx";
 import {
     HoverCard,
     HoverCardContent,
     HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "@/components/ui/hover-card.jsx";
 import {
     Card,
     CardContent,
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/card.jsx";
 
 const MAX_CATEGORIES = 3;
 const MIN_TITLE_LENGTH = 5;

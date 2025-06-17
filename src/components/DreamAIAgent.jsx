@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Button} from '@/components/ui/button';
+import {Button} from '@/components/ui/button.jsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {MessageCircle, X, MoonStar} from 'lucide-react';
 

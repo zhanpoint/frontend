@@ -4,7 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-
 // 获取当前文件的目录路径
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,23 +26,12 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path,
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('WebSocket代理错误:', err);
-          });
-          proxy.on('proxyReq', (_proxyReq, req, _res) => {
-            console.log('WebSocket代理请求:', req.url);
-          });
-          proxy.on('proxyReqWs', (_proxyReq, req, _socket) => {
-            console.log('WebSocket连接:', req.url);
-          });
-        }
       }
     },
+    // HMR配置 - 通过WebSocket实现实时模块热替换，无需刷新页面即可更新变化的模块
     hmr: {
-      protocol: 'ws',
-      host: 'localhost'
+      protocol: 'ws',    // WebSocket协议
+      host: 'localhost'  // HMR服务主机
     }
   }
 });

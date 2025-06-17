@@ -5,31 +5,31 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDreams } from "@/contexts/DreamsContext";
 import "./css/MyDreams.css";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
+import { Checkbox } from "@/components/ui/checkbox.jsx";
+import { Label } from "@/components/ui/label.jsx";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar.jsx";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select.jsx";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
     DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu.jsx";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,7 +39,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog.jsx";
 
 // 梦境分类颜色映射
 const CATEGORY_COLORS = {

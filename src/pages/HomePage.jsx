@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Writer from '../components/ui/Writer.jsx';
+import Writer from '../components/ui/writer.jsx';
 import { DreamIntro } from '../components/DreamIntro';
 import './css/HomePage.css';
 import { SparklesCore } from "@/components/ui/sparkles.jsx";

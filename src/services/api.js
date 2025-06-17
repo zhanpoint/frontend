@@ -4,10 +4,7 @@ import notification from "@/utils/notification";
 // 创建Axios实例
 const api = axios.create({
     // 根据实际部署环境设置baseURL
-    baseURL: import.meta.env.MODE === 'production'
-        ? 'https://yourdomain.com/api' // 生产环境API地址
-        : 'http://localhost:8412/api',  // 开发环境API地址，与vite代理保持一致
-
+    baseURL: '/api',
     // 请求超时时间
     timeout: 10000,
 

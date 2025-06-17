@@ -12,22 +12,22 @@ import {
     NavigationMenuLink,
     NavigationMenuList,
     NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+} from "@/components/ui/navigation-menu.jsx";
 import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
     SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/Button.jsx";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/sheet.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/components/ui/accordion";
+} from "@/components/ui/accordion.jsx";
 
 
 // 定义导航栏属性接口
