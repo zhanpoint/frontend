@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, User, Menu, Book, Compass, Users, Moon } from "lucide-react";
-import "./css/Navbar.css";
-import { useAuth } from "@/contexts/AuthContext";
+import "./Navbar.css";
+import { useAuth } from "@/hooks/useAuth";
 import UserAvatar from "@/components/user/UserAvatar";
 
 import {

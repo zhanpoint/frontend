@@ -1,14 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
-import "./css/ResetPasswordPage.css";
+import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm";
+import "@/styles/features/auth.css";
 
 /**
  * 重置密码页面组件
  */
 export function ResetPasswordPage() {
     return (
-        <div className="reset-password-page">
+        <div className="auth-page">
             {/* 简化版导航栏，只有品牌logo */}
             <header className="auth-header">
                 <div className="auth-header-container">
@@ -19,14 +19,15 @@ export function ResetPasswordPage() {
                 </div>
             </header>
 
-            <div className="reset-password-container">
-                <div className="reset-password-content">
+            <div className="auth-container">
+                <div className="auth-content">
                     <ResetPasswordForm />
                 </div>
 
                 {/* 背景装饰元素 */}
                 <div className="bg-decoration bg-decoration-1"></div>
                 <div className="bg-decoration bg-decoration-2"></div>
+                <div className="bg-decoration bg-decoration-3"></div>
             </div>
         </div>
     );

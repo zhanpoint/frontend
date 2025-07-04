@@ -13,7 +13,7 @@ export const passwordAuth = {
      * @returns {Promise} - API响应
      */
     login: async (username, password) => {
-        const response = await api.post('/auth/login/', { username, password });
+        const response = await api.post('/auth/sessions/', { username, password });
         tokenManager.saveAuthResponse(response);
         return response;
     },

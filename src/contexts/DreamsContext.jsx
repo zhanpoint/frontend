@@ -1,10 +1,10 @@
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import api from '@/services/api';
 import notification from '@/utils/notification';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // 创建梦境数据上下文
-const DreamsContext = createContext();
+export const DreamsContext = createContext();
 
 /**
  * 梦境数据上下文提供者

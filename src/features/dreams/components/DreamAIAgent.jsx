@@ -1,7 +1,7 @@
-import React, {useState} from 'react';
-import {Button} from '@/components/ui/button.jsx';
-import {AnimatePresence, motion} from 'framer-motion';
-import {MessageCircle, X, MoonStar} from 'lucide-react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button.jsx';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MessageCircle, X, MoonStar } from 'lucide-react';
 
 /**
  * 梦境AI助手组件
@@ -23,9 +23,9 @@ export function DreamAIAgent() {
                 className={`rounded-full w-14 h-14 shadow-lg bg-gradient-to-br from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 flex items-center justify-center transition-all duration-300 ${isOpen ? 'scale-105' : ''}`}
             >
                 {isOpen ? (
-                    <X className="w-6 h-6 text-white"/>
+                    <X className="w-6 h-6 text-white" />
                 ) : (
-                    <MoonStar className="w-6 h-6 text-white"/>
+                    <MoonStar className="w-6 h-6 text-white" />
                 )}
             </Button>
 
@@ -33,10 +33,10 @@ export function DreamAIAgent() {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{opacity: 0, y: 20, scale: 0.95}}
-                        animate={{opacity: 1, y: 0, scale: 1}}
-                        exit={{opacity: 0, y: 20, scale: 0.95}}
-                        transition={{duration: 0.3}}
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
                         className="absolute bottom-20 right-0 bg-gradient-to-b from-gray-900 to-black rounded-2xl shadow-[0_0_25px_rgba(139,92,246,0.3)] overflow-hidden"
                         style={{
                             width: '800px',
@@ -48,7 +48,7 @@ export function DreamAIAgent() {
                         <div className="w-full h-[400px]">
                             <iframe
                                 src="https://udify.app/chatbot/yUtaCCg8VQR1JqJb"
-                                style={{width: '100%', height: '100%', border: 'none'}}
+                                style={{ width: '100%', height: '100%', border: 'none' }}
                                 frameBorder="0"
                                 allow="microphone"
                                 title="梦境解析助手"
@@ -61,4 +61,4 @@ export function DreamAIAgent() {
     );
 }
 
-export default DreamAIAgent;
+export default DreamAIAgent; 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Settings, LogOut } from 'lucide-react';
 import notification from '@/utils/notification';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.jsx';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,9 +11,9 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.jsx';
+} from '@/components/ui/dropdown-menu';
 import { getDefaultAvatarUrl, getInitials } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const UserAvatar = () => {
     const { user, logout } = useAuth();

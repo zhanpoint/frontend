@@ -1,6 +1,6 @@
 import smsService from './sms';
+import emailService from './email';
 // 未来可能添加的其他通知服务
-// import emailService from './email';
 // import pushService from './push';
 
 /**
@@ -10,6 +10,10 @@ import smsService from './sms';
 export const notificationService = {
     // 短信通知服务
     sms: smsService,
+    email: emailService,
 };
 
-export default notificationService; 
+export default notificationService;
+
+export { default as sms } from './sms';
+export { default as email } from './email'; 

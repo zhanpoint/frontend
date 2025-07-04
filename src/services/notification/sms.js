@@ -8,11 +8,11 @@ export const smsService = {
     /**
      * 发送短信验证码
      * @param {string} phone - 手机号
-     * @param {string} scene - 短信场景 ('register', 'login', 'reset_password')
+     * @param {string} scene - 使用场景 (register, login, reset_password)
      * @returns {Promise} - API响应
      */
-    sendVerificationCode: (phone, scene = 'register') => {
-        return api.post('/sms/send-verification-code/', { phone, scene });
+    sendVerificationCode: async (phone, scene = 'register') => {
+        return api.post('/verifications/sms/', { phone, scene });
     },
 
     /**

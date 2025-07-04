@@ -9,7 +9,7 @@ import HomePage from "./pages/HomePage";
 import MyDreams from "./pages/MyDreams";
 import DreamDetail from "./pages/DreamDetail";
 import EditDream from "./pages/EditDream";
-import PrivateRoute from "./components/auth/PrivateRoute";
+import PrivateRoute from "./features/auth/components/PrivateRoute";
 
 /**
  * 应用路由配置

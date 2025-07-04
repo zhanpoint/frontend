@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useDreams } from '@/contexts/DreamsContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useDreams } from '@/hooks/useDreams';
 import CreatePost from './CreatePost';
 
 const EditDream = () => {

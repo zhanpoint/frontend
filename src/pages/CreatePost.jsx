@@ -15,7 +15,7 @@ import MDEditor from '@uiw/react-md-editor';
 import "./css/CreatePost.css";
 import notification from "@/utils/notification";
 import api from "../services/api";
-import { useDreams } from "@/contexts/DreamsContext";
+import { useDreams } from "@/hooks/useDreams";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";

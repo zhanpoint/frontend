@@ -33,7 +33,7 @@ export const auth = {
             const refreshToken = tokenManager.getRefreshToken();
             if (accesstoken) {
                 // 向后端发送注销请求，使当前token失效
-                await api.post('/auth/logout/', { refresh: refreshToken }, {
+                await api.delete('/auth/sessions/', { refresh: refreshToken }, {
                     headers: {
                         Authorization: `Bearer ${accesstoken}`
                     }
@@ -67,7 +67,7 @@ export const auth = {
         }
 
         try {
-            const response = await api.post('/auth/token/refresh/', {
+            const response = await api.post('/auth/tokens/refresh/', {
                 refresh: refreshToken
             });
 
@@ -102,4 +102,12 @@ export const auth = {
 };
 
 // 默认导出
-export default auth; 
+export default auth;
+
+// 认证服务统一导出
+export { default as passwordAuth } from './passwordAuth';
+export { default as passwordReset } from './passwordReset';
+export { default as profileManager } from './profileManager';
+export { default as smsAuth } from './smsAuth';
+export { default as emailAuth } from './emailAuth';
+export { default as tokenManager } from './tokenManager'; 

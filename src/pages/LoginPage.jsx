@@ -1,14 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { DualLoginForm } from "@/components/auth/DualLoginForm";
-import "./css/LoginPage.css";
+import { DualLoginForm } from "@/features/auth/components/DualLoginForm";
+import "@/styles/features/auth.css";
 
 /**
  * 登录页面组件
  */
-export function LoginPage() {
+function LoginPage() {
     return (
-        <div className="login-page">
+        <div className="auth-page">
             {/* 简化版导航栏，只有品牌logo */}
             <header className="auth-header">
                 <div className="auth-header-container">
@@ -19,22 +19,19 @@ export function LoginPage() {
                 </div>
             </header>
 
-            <div className="login-container">
-                <div className="login-content">
-                    <div className="login-header">
-                        <h1 className="login-title">梦境门户</h1>
-                        <p className="login-subtitle">登录您的账户开始探索奇妙世界</p>
-                    </div>
-
+            <div className="auth-container">
+                <div className="auth-content">
                     <DualLoginForm />
                 </div>
 
                 {/* 背景装饰元素 */}
                 <div className="bg-decoration bg-decoration-1"></div>
                 <div className="bg-decoration bg-decoration-2"></div>
+                <div className="bg-decoration bg-decoration-3"></div>
             </div>
         </div>
     );
 }
 
+export { LoginPage };
 export default LoginPage; 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Moon, Search, Calendar as CalIcon, Clock, Image as ImageIcon, FolderOpen, Tags, Tag, X, Filter, Sparkles, MoreVertical, Edit, Trash2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useDreams } from "@/contexts/DreamsContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useDreams } from "@/hooks/useDreams";
 import "./css/MyDreams.css";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx";

@@ -13,7 +13,7 @@ export const smsAuth = {
      * @returns {Promise} - API响应
      */
     loginWithCode: async (phone, code) => {
-        const response = await api.post('/auth/login-with-code/', {
+        const response = await api.post('/auth/sessions/', {
             phone_number: phone,
             code
         });
@@ -31,7 +31,7 @@ export const smsAuth = {
      * @returns {Promise} - API响应
      */
     registerWithCode: async (username, password, phone, verificationCode) => {
-        const response = await api.post('/auth/register-with-code/', {
+        const response = await api.post('/users/', {
             username,
             password,
             phone_number: phone,

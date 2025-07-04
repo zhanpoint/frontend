@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useDreams } from "@/contexts/DreamsContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDreams } from "@/hooks/useDreams";
+import { useAuth } from "@/hooks/useAuth";
 import ReactMarkdown from 'react-markdown';
 import tokenManager from "@/services/auth/tokenManager";
 import {

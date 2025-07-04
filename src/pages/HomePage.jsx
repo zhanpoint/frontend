@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import Writer from '../components/ui/writer.jsx';
-import { DreamIntro } from '../components/DreamIntro';
+
 import './css/HomePage.css';
 import { SparklesCore } from "@/components/ui/sparkles.jsx";
 import { motion } from "framer-motion";
@@ -167,8 +167,7 @@ const HomePage = () => {
                 </div>
             </section>
 
-            {/* 梦境介绍部分 */}
-            <DreamIntro />
+
 
             {/* 号召性行动区 */}
             <section className="cta-section">

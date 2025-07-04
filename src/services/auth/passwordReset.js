@@ -13,7 +13,7 @@ const passwordReset = {
      * @returns {Promise} - API响应
      */
     resetPassword: (phone, code, newPassword) => {
-        return api.post('/auth/reset-password/', {
+        return api.put('/users/password/', {
             phone,
             code,
             newPassword
