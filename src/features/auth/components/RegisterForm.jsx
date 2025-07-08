@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
-import { Eye, EyeOff, User, Lock, Phone, Mail } from "lucide-react";
+import { Eye, EyeOff, User, Lock, Phone, Mail, Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import notification from "@/utils/notification";
@@ -610,16 +610,19 @@ export function RegisterForm() {
                                 <div className="form-field">
                                     <Label htmlFor="phone-verificationCode" className="form-label">验证码</Label>
                                     <div className="verification-container">
-                                        <Input
-                                            id="phone-verificationCode"
-                                            name="verificationCode"
-                                            type="text"
-                                            placeholder="请输入6位验证码"
-                                            value={phoneFormData.verificationCode}
-                                            onChange={handlePhoneFormChange}
-                                            className={`verification-input ${errors.verificationCode ? 'input-error' : ''}`}
-                                            maxLength="6"
-                                        />
+                                        <div className="input-container flex-1">
+                                            <Shield className="input-icon" />
+                                            <Input
+                                                id="phone-verificationCode"
+                                                name="verificationCode"
+                                                type="text"
+                                                placeholder="请输入6位验证码"
+                                                value={phoneFormData.verificationCode}
+                                                onChange={handlePhoneFormChange}
+                                                className={`verification-input ${errors.verificationCode ? 'input-error' : ''}`}
+                                                maxLength="6"
+                                            />
+                                        </div>
                                         <Button
                                             type="button"
                                             onClick={handleSendPhoneVerificationCode}
@@ -747,16 +750,19 @@ export function RegisterForm() {
                                 <div className="form-field">
                                     <Label htmlFor="email-verificationCode" className="form-label">验证码</Label>
                                     <div className="verification-container">
-                                        <Input
-                                            id="email-verificationCode"
-                                            name="verificationCode"
-                                            type="text"
-                                            placeholder="请输入6位验证码"
-                                            value={emailFormData.verificationCode}
-                                            onChange={handleEmailFormChange}
-                                            className={`verification-input ${errors.verificationCode ? 'input-error' : ''}`}
-                                            maxLength="6"
-                                        />
+                                        <div className="input-container flex-1">
+                                            <Shield className="input-icon" />
+                                            <Input
+                                                id="email-verificationCode"
+                                                name="verificationCode"
+                                                type="text"
+                                                placeholder="请输入6位验证码"
+                                                value={emailFormData.verificationCode}
+                                                onChange={handleEmailFormChange}
+                                                className={`verification-input ${errors.verificationCode ? 'input-error' : ''}`}
+                                                maxLength="6"
+                                            />
+                                        </div>
                                         <Button
                                             type="button"
                                             onClick={handleSendEmailVerificationCode}

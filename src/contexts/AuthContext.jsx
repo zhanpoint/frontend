@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { tokenManager } from '../services/auth/tokenManager';
+import passwordAuth from '../services/auth/passwordAuth';
+import smsAuth from '../services/auth/smsAuth';
+import emailAuth from '../services/auth/emailAuth';
 
 // 创建认证上下文
 const AuthContext = createContext(null);
@@ -58,29 +61,67 @@ export function AuthProvider({ children }) {
         };
     }, []);
 
-    // 登录方法
-    const login = async (username, password) => {
+    /**
+     * 统一登录处理函数
+     * @param {string} loginType - 登录类型: 'password' | 'sms' | 'email'
+     * @param {Object} credentials - 登录凭据
+     * @returns {Promise<{success: boolean, message?: string, data?: Object}>}
+     */
+    const login = async (loginType, credentials) => {
         try {
-            const response = await fetch('/api/auth/sessions/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    loginType: 'password',
-                    username,
-                    password
-                }),
-            });
+            let response;
 
-            const data = await response.json();
+            switch (loginType) {
+                case 'password':
+                    response = await fetch('/api/auth/sessions/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            loginType: 'password',
+                            username: credentials.username,
+                            password: credentials.password
+                        }),
+                    });
+                    break;
+
+                case 'sms':
+                    response = await smsAuth.loginWithCode(credentials.phone, credentials.verificationCode);
+                    break;
+
+                case 'email':
+                    response = await emailAuth.loginWithEmailCode(credentials.email, credentials.verificationCode);
+                    break;
+
+                default:
+                    return {
+                        success: false,
+                        message: '不支持的登录方式'
+                    };
+            }
+
+            // 处理响应数据
+            let data;
+            if (loginType === 'password') {
+                data = await response.json();
+            } else {
+                data = response.data;
+            }
 
             if (data.code === 200) {
                 // 保存令牌和用户数据
-                tokenManager.setTokens(data.access, data.refresh);
-                tokenManager.setUserData(data.data);
-                setUser(data.data);
-                return { success: true };
+                const { access, refresh } = data;
+                const userData = data.data;
+
+                tokenManager.setTokens(access, refresh);
+                tokenManager.setUserData(userData);
+                setUser(userData);
+
+                return {
+                    success: true,
+                    data: userData
+                };
             } else {
                 return {
                     success: false,
@@ -88,7 +129,17 @@ export function AuthProvider({ children }) {
                 };
             }
         } catch (error) {
-            console.error('登录错误:', error);
+            console.error(`${loginType}登录错误:`, error);
+
+            // 处理不同类型的错误
+            if (error.response?.data?.message) {
+                return {
+                    success: false,
+                    message: error.response.data.message,
+                    field: error.response.data.field
+                };
+            }
+
             return {
                 success: false,
                 message: '网络错误，请稍后重试'
@@ -108,7 +159,7 @@ export function AuthProvider({ children }) {
         user,  // 用户信息
         isLoading,  // 加载状态
         isAuthenticated: !!user && tokenManager.isAccessTokenValid(),
-        login,  // 登录方法
+        login,  // 统一登录方法
         logout,  // 登出方法
         // 新增功能
         getTokenRemainingTime: tokenManager.getTokenRemainingTime,
@@ -120,6 +171,17 @@ export function AuthProvider({ children }) {
             {children}
         </AuthContext.Provider>
     );
+}
+
+/**
+ * 自定义Hook: 使用认证上下文
+ */
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth 必须在 AuthProvider 内部使用');
+    }
+    return context;
 }
 
 export default AuthContext; 

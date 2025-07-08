@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
-import { Eye, EyeOff, User, Lock, Phone, Mail } from "lucide-react";
+import { Eye, EyeOff, User, Lock, Phone, Mail, Shield, Sparkles, Star } from "lucide-react";
 import { smsService } from "@/services/notification/sms";
 import { emailService } from "@/services/notification/email";
-import { emailAuth } from "@/services/auth/emailAuth";
+import emailAuth from "@/services/auth/emailAuth";
 import notification from "@/utils/notification";
 import smsAuth from "@/services/auth/smsAuth";
 import { isFeatureEnabled, getAvailableLoginMethods } from "@/config/features";
+import { tokenManager } from "@/services/auth/tokenManager";
 import "./css/DreamTheme.css";
 
 /**
@@ -63,6 +64,23 @@ export function DualLoginForm() {
 
     // 加载状态
     const [isLoading, setIsLoading] = useState(false);
+
+    // 倒计时效果
+    useEffect(() => {
+        let timer;
+        if (smsCountdown > 0) {
+            timer = setTimeout(() => setSmsCountdown(smsCountdown - 1), 1000);
+        }
+        return () => clearTimeout(timer);
+    }, [smsCountdown]);
+
+    useEffect(() => {
+        let timer;
+        if (emailCountdown > 0) {
+            timer = setTimeout(() => setEmailCountdown(emailCountdown - 1), 1000);
+        }
+        return () => clearTimeout(timer);
+    }, [emailCountdown]);
 
     // 处理用户名密码表单变化
     const handlePasswordFormChange = (e) => {
@@ -189,15 +207,7 @@ export function DualLoginForm() {
 
                 // 开始倒计时
                 setSmsCountdown(60);
-                const timer = setInterval(() => {
-                    setSmsCountdown((prevCount) => {
-                        if (prevCount <= 1) {
-                            clearInterval(timer);
-                            return 0;
-                        }
-                        return prevCount - 1;
-                    });
-                }, 1000);
+                setErrors(prev => ({ ...prev, phone: "" }));
             } else {
                 notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
@@ -241,15 +251,7 @@ export function DualLoginForm() {
 
                 // 开始倒计时
                 setEmailCountdown(60);
-                const timer = setInterval(() => {
-                    setEmailCountdown((prevCount) => {
-                        if (prevCount <= 1) {
-                            clearInterval(timer);
-                            return 0;
-                        }
-                        return prevCount - 1;
-                    });
-                }, 1000);
+                setErrors(prev => ({ ...prev, email: "" }));
             } else {
                 notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
@@ -269,119 +271,59 @@ export function DualLoginForm() {
         }
     };
 
-    // 处理密码登录提交
-    const handlePasswordLogin = async (e) => {
+    // 统一的登录处理函数
+    const handleLogin = async (e, loginType) => {
         e.preventDefault();
 
-        if (!validatePasswordForm()) {
-            return;
+        // 验证表单
+        let isValid = false;
+        let credentials = {};
+
+        switch (loginType) {
+            case 'password':
+                isValid = validatePasswordForm();
+                credentials = {
+                    username: passwordForm.username,
+                    password: passwordForm.password
+                };
+                break;
+            case 'sms':
+                isValid = validateSmsForm();
+                credentials = {
+                    phone: smsForm.phone,
+                    verificationCode: smsForm.verificationCode
+                };
+                break;
+            case 'email':
+                isValid = validateEmailForm();
+                credentials = {
+                    email: emailForm.email,
+                    verificationCode: emailForm.verificationCode
+                };
+                break;
         }
 
+        if (!isValid) return;
+
         setIsLoading(true);
+        setErrors({});
 
         try {
-            const result = await login(passwordForm.username, passwordForm.password);
+            const result = await login(loginType, credentials);
 
             if (result.success) {
-                navigate(from, { replace: true });
-            } else {
-                setErrors({ general: result.message });
-            }
-        } catch (error) {
-            console.error("登录失败:", error);
-            setErrors({ general: "登录过程中出错，请稍后重试" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 处理短信验证码登录提交
-    const handleSmsLogin = async (e) => {
-        e.preventDefault();
-
-        if (!validateSmsForm()) {
-            return;
-        }
-
-        setIsLoading(true);
-
-        try {
-            const response = await smsAuth.loginWithCode(smsForm.phone, smsForm.verificationCode);
-
-            if (response.data.code === 200) {
-                // 保存用户信息和令牌
-                const { access, refresh, user } = response.data.data;
-                localStorage.setItem('accessToken', access);
-                localStorage.setItem('refreshToken', refresh);
-                localStorage.setItem('user', JSON.stringify(user));
-
                 notification.success("登录成功！");
-
-                // 触发认证成功事件
-                window.dispatchEvent(new CustomEvent('auth:login', { detail: user }));
-
-                // 跳转到目标页面
                 navigate(from, { replace: true });
             } else {
-                setErrors({ general: response.data.message || "登录失败，请重试" });
+                if (result.field) {
+                    setErrors({ [result.field]: result.message });
+                } else {
+                    setErrors({ general: result.message });
+                }
             }
         } catch (error) {
-            console.error("短信验证码登录失败:", error);
-
-            const errorMessage = error.response?.data?.message || "登录失败，请重试";
-            notification.error(errorMessage);
-
-            if (error.response?.data?.field) {
-                setErrors({ ...errors, [error.response.data.field]: errorMessage });
-            } else {
-                setErrors({ general: errorMessage });
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 处理邮箱验证码登录提交
-    const handleEmailLogin = async (e) => {
-        e.preventDefault();
-
-        if (!validateEmailForm()) {
-            return;
-        }
-
-        setIsLoading(true);
-
-        try {
-            const response = await emailAuth.loginWithEmailCode(emailForm.email, emailForm.verificationCode);
-
-            if (response.data.code === 200) {
-                // 保存用户信息和令牌
-                const { access, refresh, user } = response.data.data;
-                localStorage.setItem('accessToken', access);
-                localStorage.setItem('refreshToken', refresh);
-                localStorage.setItem('user', JSON.stringify(user));
-
-                notification.success("登录成功！");
-
-                // 触发认证成功事件
-                window.dispatchEvent(new CustomEvent('auth:login', { detail: user }));
-
-                // 跳转到目标页面
-                navigate(from, { replace: true });
-            } else {
-                setErrors({ general: response.data.message || "登录失败，请重试" });
-            }
-        } catch (error) {
-            console.error("邮箱验证码登录失败:", error);
-
-            const errorMessage = error.response?.data?.message || "登录失败，请重试";
-            notification.error(errorMessage);
-
-            if (error.response?.data?.field) {
-                setErrors({ ...errors, [error.response.data.field]: errorMessage });
-            } else {
-                setErrors({ general: errorMessage });
-            }
+            console.error(`${loginType}登录失败:`, error);
+            setErrors({ general: "登录失败，请重试" });
         } finally {
             setIsLoading(false);
         }
@@ -396,13 +338,19 @@ export function DualLoginForm() {
     // 处理跳转到忘记密码页面
     const handleGoToForgotPassword = (e) => {
         e.preventDefault();
-        navigate("/forgot-password");
+        navigate("/reset-password");
     };
 
     return (
         <Card className="w-full max-w-md mx-auto card">
             <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-bold text-center card-title">梦境门户</CardTitle>
+                <CardTitle className="text-2xl font-bold text-center card-title">
+                    <div className="flex items-center justify-center gap-2">
+                        <Sparkles className="w-6 h-6 text-purple-500" />
+                        梦境门户
+                        <Star className="w-5 h-5 text-yellow-400" />
+                    </div>
+                </CardTitle>
                 <CardDescription className="text-center">登录您的账户，开始梦想之旅</CardDescription>
             </CardHeader>
             <CardContent>
@@ -433,7 +381,7 @@ export function DualLoginForm() {
                     {/* 密码登录 */}
                     {isFeatureEnabled('PASSWORD_LOGIN_ENABLED') && (
                         <TabsContent value="password" className="space-y-4">
-                            <form onSubmit={handlePasswordLogin} className="space-y-4">
+                            <form onSubmit={(e) => handleLogin(e, 'password')} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="username">用户名</Label>
                                     <div className="relative">
@@ -501,7 +449,7 @@ export function DualLoginForm() {
                     {/* 手机验证码登录 */}
                     {isFeatureEnabled('SMS_SERVICE_ENABLED') && (
                         <TabsContent value="sms" className="space-y-4">
-                            <form onSubmit={handleSmsLogin} className="space-y-4">
+                            <form onSubmit={(e) => handleLogin(e, 'sms')} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">手机号</Label>
                                     <div className="relative">
@@ -522,18 +470,21 @@ export function DualLoginForm() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="verificationCode">验证码</Label>
+                                    <Label htmlFor="sms_verificationCode">验证码</Label>
                                     <div className="flex gap-2">
-                                        <Input
-                                            id="verificationCode"
-                                            name="verificationCode"
-                                            type="text"
-                                            placeholder="请输入6位验证码"
-                                            value={smsForm.verificationCode}
-                                            onChange={handleSmsFormChange}
-                                            className={`input ${errors.verificationCode ? 'error-input' : ''}`}
-                                            maxLength={6}
-                                        />
+                                        <div className="relative flex-1">
+                                            <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="sms_verificationCode"
+                                                name="verificationCode"
+                                                type="text"
+                                                placeholder="请输入6位验证码"
+                                                value={smsForm.verificationCode}
+                                                onChange={handleSmsFormChange}
+                                                className={`pl-10 input ${errors.verificationCode ? 'error-input' : ''}`}
+                                                maxLength={6}
+                                            />
+                                        </div>
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -541,7 +492,7 @@ export function DualLoginForm() {
                                             disabled={smsCountdown > 0 || isLoading}
                                             className="verification-button"
                                         >
-                                            {smsCountdown > 0 ? `${smsCountdown}s` : "获取验证码"}
+                                            {smsCountdown > 0 ? `${smsCountdown}s` : "发送验证码"}
                                         </Button>
                                     </div>
                                     {errors.verificationCode && (
@@ -565,7 +516,7 @@ export function DualLoginForm() {
                     {/* 邮箱验证码登录 */}
                     {isFeatureEnabled('EMAIL_SERVICE_ENABLED') && (
                         <TabsContent value="email" className="space-y-4">
-                            <form onSubmit={handleEmailLogin} className="space-y-4">
+                            <form onSubmit={(e) => handleLogin(e, 'email')} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="email">邮箱地址</Label>
                                     <div className="relative">
@@ -586,18 +537,21 @@ export function DualLoginForm() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="emailVerificationCode">验证码</Label>
+                                    <Label htmlFor="email_verificationCode">验证码</Label>
                                     <div className="flex gap-2">
-                                        <Input
-                                            id="emailVerificationCode"
-                                            name="verificationCode"
-                                            type="text"
-                                            placeholder="请输入6位验证码"
-                                            value={emailForm.verificationCode}
-                                            onChange={handleEmailFormChange}
-                                            className={`input ${errors.verificationCode ? 'error-input' : ''}`}
-                                            maxLength={6}
-                                        />
+                                        <div className="relative flex-1">
+                                            <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="email_verificationCode"
+                                                name="verificationCode"
+                                                type="text"
+                                                placeholder="请输入6位验证码"
+                                                value={emailForm.verificationCode}
+                                                onChange={handleEmailFormChange}
+                                                className={`pl-10 input ${errors.verificationCode ? 'error-input' : ''}`}
+                                                maxLength={6}
+                                            />
+                                        </div>
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -605,7 +559,7 @@ export function DualLoginForm() {
                                             disabled={emailCountdown > 0 || isLoading}
                                             className="verification-button"
                                         >
-                                            {emailCountdown > 0 ? `${emailCountdown}s` : "获取验证码"}
+                                            {emailCountdown > 0 ? `${emailCountdown}s` : "发送验证码"}
                                         </Button>
                                     </div>
                                     {errors.verificationCode && (
@@ -626,26 +580,32 @@ export function DualLoginForm() {
                         </TabsContent>
                     )}
                 </Tabs>
+
+                {/* 底部链接区域 */}
+                <div className="mt-6 space-y-4">
+                    <div className="text-center">
+                        <a
+                            href="#"
+                            onClick={handleGoToForgotPassword}
+                            className="dream-link text-sm"
+                        >
+                            <Sparkles className="w-3 h-3 inline mr-1" />
+                            忘记密码？
+                        </a>
+                    </div>
+                    <div className="text-center login-link">
+                        <span className="text-sm text-muted-foreground">还没有账户？</span>
+                        <a
+                            href="#"
+                            onClick={handleGoToRegister}
+                            className="text-primary dream-link ml-1"
+                        >
+                            <Star className="w-3 h-3 inline mr-1" />
+                            立即注册
+                        </a>
+                    </div>
+                </div>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-                <div className="text-sm text-center space-y-1">
-                    <button
-                        onClick={handleGoToForgotPassword}
-                        className="text-primary hover:underline"
-                    >
-                        忘记密码？
-                    </button>
-                </div>
-                <div className="text-sm text-center">
-                    还没有账户？{" "}
-                    <button
-                        onClick={handleGoToRegister}
-                        className="text-primary hover:underline font-medium"
-                    >
-                        立即注册
-                    </button>
-                </div>
-            </CardFooter>
         </Card>
     );
 }

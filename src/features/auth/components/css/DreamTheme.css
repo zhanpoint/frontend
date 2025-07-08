@@ -143,7 +143,7 @@
     border: 1px solid rgba(147, 51, 234, 0.3);
     color: white;
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 12px 16px 12px 40px;
     font-size: 14px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
@@ -155,6 +155,10 @@
         0 0 0 3px rgba(168, 85, 247, 0.1),
         0 0 20px rgba(147, 51, 234, 0.3);
     background: rgba(30, 30, 60, 0.9);
+}
+
+.verification-input:focus+.input-icon {
+    color: #a855f7;
 }
 
 .verification-button {
@@ -428,4 +432,67 @@
     100% {
         transform: translate(-50%, -50%) rotate(360deg);
     }
+}
+
+/* 梦境主题链接样式 */
+.dream-link {
+    color: #8b5cf6;
+    text-decoration: none;
+    font-weight: 500;
+    position: relative;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.dream-link:hover {
+    color: #ec4899;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(219, 39, 119, 0.1));
+    border-color: rgba(219, 39, 119, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+.dream-link:hover svg {
+    color: #ec4899;
+    transform: scale(1.1);
+}
+
+.login-link {
+    position: relative;
+}
+
+.login-link .text-primary {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.login-link .text-primary::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    transition: width 0.3s ease;
+    border-radius: 1px;
+}
+
+.login-link .text-primary:hover::after {
+    width: 100%;
+}
+
+.login-link .text-primary:hover {
+    transform: translateY(-1px);
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
 }

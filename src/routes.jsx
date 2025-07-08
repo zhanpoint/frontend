@@ -66,7 +66,7 @@ const router = createBrowserRouter([
         element: <LoginPage />,
     },
     {
-        path: "/forgot-password",
+        path: "/reset-password",
         element: <ResetPasswordPage />,
     },
     // 其他路由将在这里添加
