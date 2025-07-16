@@ -1,17 +1,20 @@
-/* 梦境主题认证表单样式 */
+/* 梦境主题认证表单样式 - 支持浅色、深色、系统主题 */
 
 /* 卡片容器样式 */
 .card {
-    background: linear-gradient(135deg, rgba(30, 30, 60, 0.95) 0%, rgba(50, 30, 80, 0.95) 100%);
-    border: 1px solid rgba(147, 51, 234, 0.3);
+    background: linear-gradient(135deg,
+            hsl(var(--card) / 0.95) 0%,
+            hsl(var(--card) / 0.9) 100%);
+    border: 1px solid hsl(var(--border));
     box-shadow:
-        0 8px 32px rgba(147, 51, 234, 0.2),
-        0 0 0 1px rgba(147, 51, 234, 0.1);
+        0 8px 32px hsl(var(--dream-primary) / 0.15),
+        0 0 0 1px hsl(var(--border) / 0.5);
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-radius: 20px;
     overflow: hidden;
     position: relative;
+    transition: all 0.3s ease;
 }
 
 .card::before {
@@ -21,62 +24,61 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.8), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--dream-primary) / 0.6), transparent);
     z-index: 1;
 }
 
 /* 卡片标题样式 */
 .card-title {
-    background: linear-gradient(135deg, #a855f7, #ec4899, #8b5cf6);
+    background: linear-gradient(135deg,
+            hsl(var(--dream-primary)),
+            hsl(var(--dream-secondary)),
+            hsl(var(--dream-accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+    text-shadow: 0 0 20px hsl(var(--dream-primary) / 0.3);
     font-weight: 700;
     letter-spacing: -0.02em;
+    transition: all 0.3s ease;
+}
+
+.card-description {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: color 0.3s ease;
 }
 
 /* Tab列表样式 */
 .tabs-list {
-    background: rgba(20, 20, 40, 0.8);
-    border: 1px solid rgba(147, 51, 234, 0.2);
+    background: hsl(var(--muted) / 0.5);
+    border: 1px solid hsl(var(--border));
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 24px;
+    transition: all 0.3s ease;
 }
 
 /* Tab触发器样式 */
 .tabs-list [data-state="active"] {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
     color: white;
     box-shadow:
-        0 4px 12px rgba(147, 51, 234, 0.4),
+        0 4px 12px hsl(var(--dream-primary) / 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tabs-list [data-state="inactive"] {
-    color: rgba(255, 255, 255, 0.7);
+    color: hsl(var(--muted-foreground));
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tabs-list [data-state="inactive"]:hover {
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(147, 51, 234, 0.1);
-}
-
-/* 表单字段样式 */
-.form-field {
-    margin-bottom: 20px;
-}
-
-.form-label {
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-    margin-bottom: 8px;
-    display: block;
-    font-size: 14px;
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted));
 }
 
 /* 输入容器样式 */
@@ -89,102 +91,98 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    color: rgba(147, 51, 234, 0.7);
+    color: hsl(var(--muted-foreground));
+    width: 18px;
+    height: 18px;
     z-index: 2;
     transition: color 0.3s ease;
 }
 
 /* 输入框样式 */
 .input {
-    background: rgba(20, 20, 40, 0.9);
-    border: 1px solid rgba(147, 51, 234, 0.3);
-    color: white;
-    border-radius: 12px;
-    padding: 12px 16px 12px 40px;
-    font-size: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     width: 100%;
+    padding: 12px 12px 12px 45px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    transition: all 0.3s ease;
     outline: none;
 }
 
 .input:focus {
-    border-color: #a855f7;
-    box-shadow:
-        0 0 0 3px rgba(168, 85, 247, 0.1),
-        0 0 20px rgba(147, 51, 234, 0.3);
-    background: rgba(30, 30, 60, 0.9);
+    border-color: hsl(var(--dream-primary));
+    box-shadow: 0 0 0 3px hsl(var(--dream-primary) / 0.1);
+    background: hsl(var(--background));
 }
 
 .input:focus+.input-icon {
-    color: #a855f7;
+    color: hsl(var(--dream-primary));
 }
 
 .input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: hsl(var(--muted-foreground));
 }
 
 .input-error {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    border-color: hsl(var(--destructive));
+    box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.1);
 }
 
 /* 验证码容器样式 */
 .verification-container {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: stretch;
 }
 
 .verification-input {
     flex: 1;
-    background: rgba(20, 20, 40, 0.9);
-    border: 1px solid rgba(147, 51, 234, 0.3);
-    color: white;
-    border-radius: 12px;
-    padding: 12px 16px 12px 40px;
+    padding: 12px 12px 12px 45px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-size: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     outline: none;
 }
 
 .verification-input:focus {
-    border-color: #a855f7;
-    box-shadow:
-        0 0 0 3px rgba(168, 85, 247, 0.1),
-        0 0 20px rgba(147, 51, 234, 0.3);
-    background: rgba(30, 30, 60, 0.9);
+    border-color: hsl(var(--dream-primary));
+    box-shadow: 0 0 0 3px hsl(var(--dream-primary) / 0.1);
+    background: hsl(var(--background));
 }
 
 .verification-input:focus+.input-icon {
-    color: #a855f7;
+    color: hsl(var(--dream-primary));
 }
 
+/* 验证码按钮样式 */
 .verification-button {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
-    border: none;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
     color: white;
-    border-radius: 12px;
-    padding: 12px 20px;
-    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 500;
-    white-space: nowrap;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 80px;
 }
 
 .verification-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, hsl(var(--dream-secondary)), hsl(var(--dream-primary)));
     transform: translateY(-1px);
-    box-shadow:
-        0 8px 25px rgba(147, 51, 234, 0.4),
-        0 0 20px rgba(147, 51, 234, 0.3);
+    box-shadow: 0 4px 12px hsl(var(--dream-primary) / 0.3);
 }
 
 .verification-button:disabled {
-    opacity: 0.6;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
@@ -198,35 +196,39 @@
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: rgba(147, 51, 234, 0.7);
+    color: hsl(var(--muted-foreground));
     cursor: pointer;
     padding: 4px;
-    border-radius: 6px;
+    border-radius: 4px;
     transition: all 0.3s ease;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .password-toggle:hover {
-    color: #a855f7;
-    background: rgba(147, 51, 234, 0.1);
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted));
 }
 
 /* 主要按钮样式 */
 .btn-primary {
-    background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
-    border: none;
-    color: white;
-    border-radius: 12px;
+    width: 100%;
     padding: 14px 24px;
+    background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
+    color: white;
+    border: none;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    letter-spacing: 0.025em;
+    outline: none;
 }
 
 .btn-primary::before {
@@ -237,7 +239,7 @@
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.6s ease;
+    transition: left 0.5s ease;
 }
 
 .btn-primary:hover:not(:disabled)::before {
@@ -245,14 +247,14 @@
 }
 
 .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, hsl(var(--dream-secondary)), hsl(var(--dream-primary)));
     transform: translateY(-2px);
-    box-shadow:
-        0 10px 30px rgba(147, 51, 234, 0.4),
-        0 0 30px rgba(147, 51, 234, 0.3);
+    box-shadow: 0 8px 25px hsl(var(--dream-primary) / 0.4);
 }
 
 .btn-primary:disabled {
-    opacity: 0.6;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
@@ -260,12 +262,13 @@
 
 /* 错误消息样式 */
 .error-message {
-    color: #ff6b9d;
+    color: hsl(var(--destructive));
     font-size: 12px;
     margin-top: 6px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+    font-weight: 500;
 }
 
 .error-message::before {
@@ -276,27 +279,27 @@
 /* 链接样式 */
 .login-link {
     text-align: center;
-    color: rgba(255, 255, 255, 0.8);
+    margin-top: 20px;
+    color: hsl(var(--muted-foreground));
     font-size: 14px;
-    width: 100%;
 }
 
 .login-link .text-primary {
-    color: #a855f7;
+    color: hsl(var(--dream-primary));
     text-decoration: none;
     font-weight: 500;
-    transition: all 0.3s ease;
     position: relative;
+    transition: all 0.3s ease;
 }
 
 .login-link .text-primary::after {
     content: '';
     position: absolute;
-    width: 0;
-    height: 2px;
     bottom: -2px;
     left: 0;
-    background: linear-gradient(90deg, #a855f7, #ec4899);
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
     transition: width 0.3s ease;
 }
 
@@ -305,65 +308,10 @@
 }
 
 .login-link .text-primary:hover {
-    color: #ec4899;
-    text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
-}
-
-/* 响应式设计 */
-@media (max-width: 640px) {
-    .card {
-        margin: 16px;
-        border-radius: 16px;
-    }
-
-    .verification-container {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .verification-button {
-        padding: 10px 16px;
-    }
-
-    .tabs-list {
-        font-size: 14px;
-    }
+    color: hsl(var(--dream-secondary));
 }
 
 /* 动画效果 */
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-@keyframes glow {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.card {
-    animation: float 6s ease-in-out infinite;
-}
-
-/* Tab内容过渡效果 */
-.tabs-content {
-    animation: fadeIn 0.3s ease-in-out;
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -376,35 +324,31 @@
     }
 }
 
-/* 聚焦环效果 */
+.tabs-content {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* 焦点可见性 */
 .input:focus-visible,
 .verification-input:focus-visible,
 .btn-primary:focus-visible {
-    outline: 2px solid #a855f7;
+    outline: 2px solid hsl(var(--dream-primary));
     outline-offset: 2px;
 }
 
-/* 加载状态 */
-.btn-primary:disabled {
-    position: relative;
-    color: transparent;
-}
-
+/* 禁用状态优化 */
 .btn-primary:disabled::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: none;
 }
 
-/* 验证码按钮加载状态 - 只在真正加载时显示加载圈 */
+/* 加载状态 */
 .verification-button.is-loading {
     position: relative;
     color: transparent;
@@ -415,9 +359,9 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-top: 2px solid white;
     border-radius: 50%;
@@ -426,66 +370,73 @@
 
 @keyframes spin {
     0% {
-        transform: translate(-50%, -50%) rotate(0deg);
+        transform: rotate(0deg);
     }
 
     100% {
-        transform: translate(-50%, -50%) rotate(360deg);
+        transform: rotate(360deg);
     }
 }
 
-/* 梦境主题链接样式 */
+/* 梦境风格链接 */
 .dream-link {
-    color: #8b5cf6;
+    color: hsl(var(--dream-primary));
     text-decoration: none;
     font-weight: 500;
     position: relative;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 8px;
-    background: rgba(139, 92, 246, 0.05);
-    border: 1px solid rgba(139, 92, 246, 0.1);
+    gap: 4px;
 }
 
-.dream-link:hover {
-    color: #ec4899;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(219, 39, 119, 0.1));
-    border-color: rgba(219, 39, 119, 0.2);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
-}
-
-.dream-link:hover svg {
-    color: #ec4899;
-    transform: scale(1.1);
-}
-
-.login-link {
-    position: relative;
-}
-
-.login-link .text-primary {
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.login-link .text-primary::after {
-    content: "";
+.dream-link::after {
+    content: '';
     position: absolute;
     bottom: -2px;
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
     transition: width 0.3s ease;
-    border-radius: 1px;
+}
+
+.dream-link:hover {
+    color: hsl(var(--dream-secondary));
+    transform: translateY(-1px);
+}
+
+.dream-link:hover svg {
+    transform: translateX(2px);
+}
+
+.dream-link:hover::after {
+    width: 100%;
+}
+
+/* 统一的链接样式 */
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.login-link .text-primary {
+    color: hsl(var(--dream-primary));
+    text-decoration: none;
+    font-weight: 500;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.login-link .text-primary::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
+    transition: width 0.3s ease;
 }
 
 .login-link .text-primary:hover::after {
@@ -493,6 +444,5 @@
 }
 
 .login-link .text-primary:hover {
-    transform: translateY(-1px);
-    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+    color: hsl(var(--dream-secondary));
 }

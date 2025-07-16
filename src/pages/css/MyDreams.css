@@ -1,482 +1,428 @@
-/* MyDreams.css - 梦境列表页面样式 */
-
+/* 我的梦境页面样式 */
 .my-dreams-container {
     min-height: 100vh;
-    padding-bottom: 4rem;
-    background-color: rgba(20, 20, 30, 0.4);
-    border-radius: 1rem;
-    border: 2px solid rgba(139, 92, 246, 0.2);
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(139, 92, 246, 0.05);
-    margin-top: 1rem;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 2rem;
+    position: relative;
     overflow: hidden;
 }
 
-/* 搜索和筛选栏样式 */
-.filter-bar {
-    background-color: rgba(30, 30, 36, 0.5);
-    border-radius: 0.75rem;
-    border: 1px solid rgba(128, 90, 213, 0.2);
-    padding: 1rem;
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    margin-bottom: 1.5rem;
+/* 星空背景效果 */
+.my-dreams-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+        radial-gradient(2px 2px at 40px 70px, #eee, transparent),
+        radial-gradient(1px 1px at 50px 90px, #eee, transparent),
+        radial-gradient(1px 1px at 130px 80px, #eee, transparent),
+        radial-gradient(2px 2px at 80px 10px, #eee, transparent);
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.3;
+    animation: sparkle 10s ease-in-out infinite;
+    pointer-events: none;
 }
 
-/* 搜索框样式 */
-.search-container {
+@keyframes sparkle {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* 头部样式 */
+.my-dreams-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.my-dreams-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(147, 51, 234, 0.5);
+}
+
+.create-dream-button {
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+}
+
+.create-dream-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(147, 51, 234, 0.4);
+}
+
+/* 搜索和筛选栏 */
+.search-filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    flex-wrap: wrap;
+}
+
+.search-wrapper {
+    flex: 1;
+    min-width: 300px;
     position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.5);
+    width: 1.25rem;
+    height: 1.25rem;
 }
 
 .search-input {
-    background-color: rgba(23, 23, 35, 0.8);
-    border: 1px solid rgba(128, 90, 213, 0.3);
-    border-radius: 0.5rem;
-    height: 2.5rem;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding-left: 3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    color: #fff;
 }
 
 .search-input:focus {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    border-color: #9333ea;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
 }
 
-/* 筛选按钮样式 */
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
 .filter-controls {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
-.category-filter-btn,
-.date-filter-btn,
-.sort-select,
-.tags-filter-btn {
-    background-color: rgba(23, 23, 35, 0.8);
-    border: 1px solid rgba(128, 90, 213, 0.3);
-    color: #d1d1f0;
-    transition: all 0.2s ease;
-    border-radius: 0.5rem;
+.filter-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    color: #fff;
+    min-width: 150px;
+}
+
+/* 梦境统计 */
+.dreams-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.stat-icon {
+    width: 2.5rem;
     height: 2.5rem;
+    color: #9333ea;
 }
 
-.category-filter-btn:hover,
-.date-filter-btn:hover,
-.tags-filter-btn:hover {
-    background-color: rgba(30, 30, 45, 0.9);
-    border-color: rgba(139, 92, 246, 0.5);
-    transform: translateY(-1px);
+.stat-content {
+    display: flex;
+    flex-direction: column;
 }
 
-.date-filter-btn.date-selected {
-    background-color: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.5);
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #e9d5ff;
 }
 
-.sort-select {
-    background-color: rgba(23, 23, 35, 0.8);
-    border-color: rgba(128, 90, 213, 0.3);
+.stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
 }
 
-.clear-all-btn {
-    background-color: rgba(35, 35, 40, 0.5);
-    color: rgba(200, 200, 255, 0.9);
-    border: 1px solid rgba(139, 92, 246, 0.2);
-    transition: all 0.2s ease;
-    height: 2.5rem;
+/* 梦境网格 */
+.dreams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.clear-all-btn:hover {
-    background-color: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.4);
-}
-
-/* 标签云样式 */
-.tag-cloud-panel {
-    background-color: rgba(30, 30, 36, 0.5);
-    border-radius: 0.75rem;
-    border: 1px solid rgba(128, 90, 213, 0.1);
-    padding: 1rem;
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.tags-popover {
-    background-color: rgba(25, 25, 35, 0.95);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    width: 300px;
-    max-width: 90vw;
-}
-
-.tag-cloud-container {
-    max-height: 180px;
-    overflow-y: auto;
-    padding-right: 0.5rem;
-    /* 美化滚动条 */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(139, 92, 246, 0.3) rgba(30, 30, 36, 0.2);
-}
-
-.tag-cloud-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.tag-cloud-container::-webkit-scrollbar-track {
-    background: rgba(30, 30, 36, 0.2);
-    border-radius: 10px;
-}
-
-.tag-cloud-container::-webkit-scrollbar-thumb {
-    background-color: rgba(139, 92, 246, 0.3);
-    border-radius: 10px;
-}
-
-.tag-cloud-item {
-    transition: all 0.3s ease;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 999px;
-    animation: fadeIn 0.5s ease;
-    animation-fill-mode: both;
-}
-
-.tag-cloud-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-}
-
-/* 激活的筛选器样式 */
-.active-filters {
-    margin-top: 0.75rem;
-    background-color: rgba(35, 35, 45, 0.4);
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px dashed rgba(128, 90, 213, 0.2);
-    animation: fadeIn 0.3s ease;
-}
-
-.active-filter-badge {
-    background-color: rgba(35, 35, 45, 0.8);
-    border-color: rgba(128, 90, 213, 0.3);
-    color: #d1d1f0;
-    transition: all 0.2s ease;
-}
-
-.active-filter-badge:hover {
-    background-color: rgba(45, 45, 55, 0.9);
-    border-color: rgba(139, 92, 246, 0.4);
-}
-
-.clear-tags-btn:hover {
-    color: rgba(139, 92, 246, 1);
-    background-color: rgba(35, 35, 45, 0.6);
-}
-
-/* 梦境卡片基础样式 */
+/* 梦境卡片 */
 .dream-card {
-    background-color: rgba(30, 30, 36, 0.7);
-    border: 1px solid rgba(128, 90, 213, 0.15);
-    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-    cursor: pointer;
-    position: relative;
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
 .dream-card:hover {
-    transform: translateY(-5px) scale(1.01);
-    box-shadow: 0 5px 20px rgba(124, 58, 237, 0.3);
-    border-color: rgba(139, 92, 246, 0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    border-color: rgba(147, 51, 234, 0.3);
 }
 
-.dream-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 1;
+.dream-card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* 带图片的梦境卡片样式 */
-.dream-card.has-image {
+.dream-card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.dream-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #e9d5ff;
+    flex: 1;
     overflow: hidden;
-}
-
-.dream-card-image-container {
-    position: relative;
-    height: 140px;
-    overflow: hidden;
-}
-
-.dream-card-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    transition: transform 0.5s ease;
-}
-
-.dream-card:hover .dream-card-image {
-    transform: scale(1.05);
-}
-
-.dream-card-image-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to bottom,
-            rgba(20, 20, 30, 0.1) 0%,
-            rgba(20, 20, 30, 0.6) 70%,
-            rgba(25, 25, 35, 0.8) 100%);
-}
-
-/* 卡片头部样式 */
-.dream-card .dream-title {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    transition: color 0.3s ease;
-    position: relative;
-    z-index: 2;
+    text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
-.dream-card:hover .dream-title {
-    color: rgba(168, 85, 247, 1);
+.dream-card-actions {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.dream-card .with-image {
-    padding-top: 0.5rem;
-    background: transparent;
-    position: relative;
-    z-index: 2;
+.dream-card:hover .dream-card-actions {
+    opacity: 1;
 }
 
-/* 卡片内容样式 */
-.dream-card .dream-content {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.5;
-    position: relative;
-    z-index: 2;
+.action-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s ease;
 }
 
-/* 图片指示器样式 */
-.image-indicator {
+.action-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.delete-icon:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.dream-card-meta {
     display: flex;
     align-items: center;
-    padding: 0.25rem 0.5rem;
-    background: rgba(139, 92, 246, 0.15);
-    border-radius: 999px;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
 }
 
-/* 骨架屏加载动画 */
-.skeleton-card {
-    min-height: 250px;
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
-.skeleton-image-placeholder {
-    height: 120px;
-    background: linear-gradient(90deg,
-            rgba(40, 40, 55, 0.8) 25%,
-            rgba(50, 50, 65, 0.8) 50%,
-            rgba(40, 40, 55, 0.8) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
+.meta-item.lucidity {
+    color: #9333ea;
+}
+
+.dream-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 分类标签 */
+.dream-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid;
+    transition: all 0.2s ease;
+}
+
+/* 梦境预览 */
+.dream-preview {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    font-size: 0.9375rem;
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+/* 梦境底部 */
+.dream-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dream-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+}
+
+.tag-name {
+    color: #e9d5ff;
+}
+
+.tag-more {
+    color: #9333ea;
+    font-weight: 500;
+}
+
+.dream-moods {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mood-icon {
+    font-size: 1.25rem;
+    cursor: default;
+    transition: transform 0.2s ease;
+}
+
+.mood-icon:hover {
+    transform: scale(1.2);
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.empty-icon {
+    width: 5rem;
+    height: 5rem;
+    color: rgba(147, 51, 234, 0.3);
+    margin: 0 auto 1.5rem;
+}
+
+.empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #e9d5ff;
     margin-bottom: 0.5rem;
 }
 
-.skeleton {
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
-    background: linear-gradient(90deg,
-            rgba(45, 45, 60, 0.8) 25%,
-            rgba(60, 60, 75, 0.8) 50%,
-            rgba(45, 45, 60, 0.8) 75%);
-    background-size: 200% 100%;
+.empty-description {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.5rem;
 }
 
-@keyframes skeleton-pulse {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* 空状态样式 */
-.empty-state {
-    background: linear-gradient(135deg, rgba(30, 30, 40, 0.6) 0%, rgba(20, 20, 30, 0.6) 100%);
-    border-radius: 1rem;
-    padding: 3rem;
-    border: 1px dashed rgba(128, 90, 213, 0.3);
-}
-
-/* 创建梦境按钮 */
-.create-dream-btn {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(124, 58, 237, 0.9));
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-    border: none;
-}
-
-.create-dream-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.4);
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(124, 58, 237, 1));
-}
-
-/* 分类选择器样式 */
-.category-popover {
-    background-color: rgba(25, 25, 35, 0.95);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    width: 280px;
-}
-
-.categories-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-}
-
-/* 梦境分类标签样式 */
-.bg-gray-500 {
-    background-color: rgba(107, 114, 128, 0.8) !important;
-}
-
-.bg-blue-500 {
-    background-color: rgba(59, 130, 246, 0.8) !important;
-}
-
-.bg-cyan-500 {
-    background-color: rgba(6, 182, 212, 0.8) !important;
-}
-
-.bg-purple-500 {
-    background-color: rgba(139, 92, 246, 0.8) !important;
-}
-
-.bg-green-500 {
-    background-color: rgba(34, 197, 94, 0.8) !important;
-}
-
-.bg-red-500 {
-    background-color: rgba(239, 68, 68, 0.8) !important;
-}
-
-.bg-yellow-500 {
-    background-color: rgba(234, 179, 8, 0.8) !important;
-}
-
-.bg-indigo-500 {
-    background-color: rgba(99, 102, 241, 0.8) !important;
-}
-
-/* 动画效果 */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 响应式调整 */
+/* 响应式设计 */
 @media (max-width: 768px) {
     .my-dreams-container {
         padding: 1rem;
     }
 
-    .dreams-list {
-        grid-template-columns: 1fr;
+    .my-dreams-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
     }
 
-    .filter-controls {
-        flex-wrap: wrap;
-        margin-top: 0.75rem;
+    .my-dreams-title {
+        font-size: 2rem;
     }
 
-    .search-container {
+    .create-dream-button {
         width: 100%;
     }
 
-    .categories-grid {
+    .search-filter-bar {
+        flex-direction: column;
+    }
+
+    .search-wrapper {
+        min-width: auto;
+    }
+
+    .filter-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .filter-select {
+        flex: 1;
+    }
+
+    .dreams-stats {
+        flex-direction: column;
+    }
+
+    .dreams-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
-    .dream-card-image-container {
-        height: 120px;
+    .dream-card-actions {
+        opacity: 1;
     }
-}
-
-/* 三点菜单样式 */
-.dream-actions-menu {
-    background-color: rgba(23, 25, 35, 0.95);
-    border: 1px solid rgba(78, 78, 95, 0.3);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-}
-
-.dream-actions-menu .dropdown-menu-item {
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-}
-
-/* 确认删除对话框样式 */
-.AlertDialogContent {
-    border-color: rgba(78, 78, 95, 0.5);
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
-}
-
-.AlertDialogTitle {
-    color: #f3f3ff;
-}
-
-.AlertDialogDescription {
-    color: #c9c9d9;
-    margin-top: 0.5rem;
-}
-
-/* 梦境卡片操作按钮 */
-.dream-card .h-8.w-8.p-0 {
-    opacity: 0.6;
-    transition: opacity 0.2s ease-in-out;
-}
-
-.dream-card:hover .h-8.w-8.p-0 {
-    opacity: 1;
 }

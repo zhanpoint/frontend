@@ -1,4 +1,4 @@
-import api from '../api';
+import api from '../api/index';
 
 /**
  * 短信通知服务

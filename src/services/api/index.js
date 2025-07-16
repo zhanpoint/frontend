@@ -6,6 +6,9 @@ import { tokenManager } from '../auth/tokenManager';
 setupRequestInterceptor(apiClient);
 setupResponseInterceptor(apiClient);
 
+// 导出配置好的API客户端
+export default apiClient;
+
 // 认证工具
 export const auth = {
     // 登出
@@ -28,6 +31,4 @@ export const auth = {
     getTokenRemainingTime() {
         return tokenManager.getTokenRemainingTime();
     }
-};
-
-export default apiClient; 
+}; 

@@ -1,691 +1,368 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Moon, Search, Calendar as CalIcon, Clock, Image as ImageIcon, FolderOpen, Tags, Tag, X, Filter, Sparkles, MoreVertical, Edit, Trash2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useDreams } from "@/hooks/useDreams";
-import "./css/MyDreams.css";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter, Calendar, Sparkles, Moon, Hash, Eye, Edit, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import notification from '@/utils/notification';
+import api from '@/services/api';
+import './css/MyDreams.css';
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button.jsx";
-import { Input } from "@/components/ui/input.jsx";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
-import { Checkbox } from "@/components/ui/checkbox.jsx";
-import { Label } from "@/components/ui/label.jsx";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar.jsx";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select.jsx";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu.jsx";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog.jsx";
-
-// 梦境分类颜色映射
-const CATEGORY_COLORS = {
-    normal: "bg-gray-500",
-    memorable: "bg-blue-500",
-    indicate: "bg-cyan-500",
-    archetypal: "bg-purple-500",
-    lucid: "bg-green-500",
-    nightmare: "bg-red-500",
-    repeating: "bg-yellow-500",
-    sleep_paralysis: "bg-indigo-500"
+// 梦境分类配置
+const CATEGORY_CONFIG = {
+    normal: { label: '普通梦境', color: '#6366f1' },
+    lucid: { label: '清醒梦', color: '#8b5cf6' },
+    nightmare: { label: '噩梦', color: '#ef4444' },
+    recurring: { label: '重复梦', color: '#f59e0b' },
+    prophetic: { label: '预知梦', color: '#10b981' },
+    healing: { label: '治愈梦', color: '#06b6d4' },
+    spiritual: { label: '灵性梦境', color: '#ec4899' },
+    creative: { label: '创意梦境', color: '#f97316' },
 };
 
-// 标签类型颜色映射
-const TAG_TYPE_COLORS = {
-    theme: "text-purple-300",
-    character: "text-blue-300",
-    location: "text-green-300"
+// 情绪配置
+const MOOD_CONFIG = {
+    very_negative: '😢',
+    negative: '😔',
+    neutral: '😐',
+    positive: '😊',
+    very_positive: '😄',
 };
 
 const MyDreams = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
-    const { dreams, isLoading: dreamsLoading, fetchDreams, deleteDream } = useDreams();
+    const [dreams, setDreams] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [sortBy, setSortBy] = useState('newest');
+    const [deletingId, setDeletingId] = useState(null);
 
-    // 本地状态仅用于UI控制
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [sortBy, setSortBy] = useState("date-desc");
-    const [categoryOptions, setCategoryOptions] = useState({});
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [allTags, setAllTags] = useState([]);
-    const [selectedTags, setSelectedTags] = useState([]);
-
-    // 删除确认对话框状态
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [dreamToDelete, setDreamToDelete] = useState(null);
-
-    // 初始化时加载数据
     useEffect(() => {
-        // 确保认证状态已加载
-        if (!authLoading) {
-            if (isAuthenticated) {
-                fetchDreams(); // 使用DreamsContext的fetchDreams
-            } else {
-                // 未登录，重定向到登录页
-                navigate('/login', { state: { from: '/my-dreams' } });
-            }
+        fetchDreams();
+    }, []);
+
+    const fetchDreams = async () => {
+        try {
+            const response = await api.get('/dreams/');
+            const dreamsData = response.data.results || response.data;
+            setDreams(Array.isArray(dreamsData) ? dreamsData : []);
+        } catch (error) {
+            notification.error('获取梦境列表失败');
+            setDreams([]);
+        } finally {
+            setLoading(false);
         }
-    }, [isAuthenticated, authLoading, navigate, fetchDreams]);
-
-    // 提取所有可用的分类选项
-    useEffect(() => {
-        if (dreams.length > 0) {
-            const categories = {};
-            const tagsSet = new Set();
-
-            dreams.forEach(dream => {
-                // 收集分类
-                if (dream.categories && Array.isArray(dream.categories)) {
-                    dream.categories.forEach(cat => {
-                        if (cat.name && cat.display_name) {
-                            categories[cat.name] = cat.display_name;
-                        }
-                    });
-                }
-
-                // 收集所有标签
-                if (dream.tags) {
-                    Object.values(dream.tags).forEach(tagArray => {
-                        tagArray.forEach(tag => tagsSet.add(tag));
-                    });
-                }
-            });
-
-            setCategoryOptions(categories);
-            setAllTags(Array.from(tagsSet).sort());
-        }
-    }, [dreams]);
-
-    // 当筛选条件变化时进行本地筛选
-    const filteredDreams = dreams.filter(dream => {
-        // 搜索条件筛选 - 标题、内容和标签
-        const matchesSearch = searchQuery === '' ||
-            dream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            dream.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (dream.tags && Object.values(dream.tags).some(tagArray =>
-                tagArray.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-            ));
-
-        // 分类筛选
-        const matchesCategory = selectedCategories.length === 0 ||
-            (dream.categories && dream.categories.some(cat =>
-                selectedCategories.includes(cat.name)
-            ));
-
-        // 日期筛选
-        const matchesDate = !selectedDate ||
-            (dream.created_at &&
-                new Date(dream.created_at).toDateString() === new Date(selectedDate).toDateString());
-
-        // 标签筛选
-        const matchesTags = selectedTags.length === 0 ||
-            (dream.tags && Object.values(dream.tags).some(tagArray =>
-                tagArray.some(tag => selectedTags.includes(tag))
-            ));
-
-        return matchesSearch && matchesCategory && matchesDate && matchesTags;
-    }).sort((a, b) => {
-        // 排序逻辑
-        const dateA = new Date(a.created_at || '');
-        const dateB = new Date(b.created_at || '');
-
-        return sortBy === 'date-desc'
-            ? dateB - dateA  // 最新在前
-            : dateA - dateB; // 最早在前
-    });
-
-    // 提取并对内容进行摘要处理
-    const getSummary = (content) => {
-        // 移除Markdown语法
-        let plainText = content
-            .replace(/!\[.*?\]\(.*?\)/g, '') // 移除图片
-            .replace(/\[.*?\]\(.*?\)/g, '$1') // 移除链接，保留文本
-            .replace(/[#*_~`>]/g, ''); // 移除格式字符
-
-        // 限制字数并添加省略号
-        return plainText.length > 120
-            ? plainText.substring(0, 120).trim() + '...'
-            : plainText;
     };
 
-    // 获取梦境预览图
-    const getDreamPreviewImage = (dream) => {
-        if (dream.images && dream.images.length > 0) {
-            return dream.images[0].url;
+    const handleDelete = async (dreamId) => {
+        setDeletingId(dreamId);
+        try {
+            await api.delete(`/dreams/${dreamId}/`);
+            setDreams(dreams.filter(dream => dream.id !== dreamId));
+            notification.success('梦境已删除');
+        } catch (error) {
+            notification.error('删除失败');
+        } finally {
+            setDeletingId(null);
         }
-        return null;
     };
 
-    // 渲染标签
-    const renderTags = (tags) => {
-        if (!tags) return null;
-
-        const allTags = [
-            ...(tags.theme || []).map(tag => ({ text: tag, type: 'theme' })),
-            ...(tags.character || []).map(tag => ({ text: tag, type: 'character' })),
-            ...(tags.location || []).map(tag => ({ text: tag, type: 'location' }))
-        ];
-
-        if (allTags.length === 0) return null;
-
-        return (
-            <div className="flex flex-wrap gap-1 mt-2">
-                {allTags.slice(0, 3).map((tag, index) => (
-                    <span key={index} className={`text-xs ${TAG_TYPE_COLORS[tag.type] || 'text-gray-400'}`}>
-                        #{tag.text}
-                        {index < Math.min(allTags.length - 1, 2) && " "}
-                    </span>
-                ))}
-                {allTags.length > 3 && (
-                    <span className="text-xs text-gray-400 flex items-center">
-                        <span className="mx-1">+</span>
-                        {allTags.length - 3}
-                    </span>
-                )}
-            </div>
-        );
-    };
-
-    // 处理分类选择变化
-    const handleCategoryChange = (categoryName) => {
-        setSelectedCategories(prev => {
-            if (prev.includes(categoryName)) {
-                return prev.filter(item => item !== categoryName);
-            } else {
-                return [...prev, categoryName];
-            }
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
         });
     };
 
-    // 处理标签选择
-    const handleTagSelect = (tag) => {
-        setSelectedTags(prev => {
-            if (prev.includes(tag)) {
-                return prev.filter(t => t !== tag);
-            } else {
-                return [...prev, tag];
+    const truncateContent = (content, maxLength = 150) => {
+        if (content.length <= maxLength) return content;
+        return content.substring(0, maxLength) + '...';
+    };
+
+    // 过滤和排序梦境
+    const filteredAndSortedDreams = dreams
+        .filter(dream => {
+            const matchesSearch = dream.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dream.content.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = filterCategory === 'all' ||
+                dream.categories.includes(filterCategory);
+            return matchesSearch && matchesCategory;
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case 'newest':
+                    return new Date(b.dream_date) - new Date(a.dream_date);
+                case 'oldest':
+                    return new Date(a.dream_date) - new Date(b.dream_date);
+                case 'title':
+                    return a.title.localeCompare(b.title);
+                default:
+                    return 0;
             }
         });
-    };
 
-    // 清除筛选
-    const clearFilters = () => {
-        setSearchQuery("");
-        setSelectedCategories([]);
-        setSelectedDate(null);
-        setSelectedTags([]);
-    };
-
-    // 处理梦境删除
-    const handleDeleteClick = (e, dream) => {
-        e.stopPropagation(); // 阻止点击传播到卡片
-        e.preventDefault(); // 阻止默认行为
-
-        // 设置要删除的梦境并打开确认对话框
-        setDreamToDelete(dream);
-        setDeleteDialogOpen(true);
-    };
-
-    // 确认删除梦境
-    const confirmDelete = async () => {
-        if (dreamToDelete && dreamToDelete.id) {
-            await deleteDream(dreamToDelete.id);
-            setDeleteDialogOpen(false);
-            setDreamToDelete(null);
-        }
-    };
-
-    // 处理编辑点击
-    const handleEditClick = (e, dreamId) => {
-        e.stopPropagation(); // 阻止点击传播到卡片
-        e.preventDefault(); // 阻止默认行为
-
-        // 导航到编辑页面
-        navigate(`/edit-dream/${dreamId}`);
-    };
-
-    // 渲染梦境卡片
-    const renderDreamCard = (dream) => {
-        const previewImage = getDreamPreviewImage(dream);
-
+    if (loading) {
         return (
-            <Card
-                key={dream.id}
-                className={`dream-card hover:border-purple-400 transition-all ${previewImage ? 'has-image' : ''}`}
-                onClick={() => navigate(`/dreams/${dream.id}`)}
-            >
-                {previewImage && (
-                    <div className="dream-card-image-container">
-                        <div
-                            className="dream-card-image"
-                            style={{ backgroundImage: `url(${previewImage})` }}
-                        ></div>
-                        <div className="dream-card-image-overlay"></div>
-                    </div>
-                )}
-
-                <CardHeader className={`pb-2 ${previewImage ? 'with-image' : ''}`}>
-                    <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg font-bold text-purple-50 flex items-start">
-                            <span className="mr-2 dream-title">{dream.title}</span>
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                            {dream.images && dream.images.length > 0 && !previewImage && (
-                                <div className="image-indicator">
-                                    <ImageIcon className="h-4 w-4 text-purple-300 flex-shrink-0" />
-                                    <span className="text-xs text-purple-300 ml-1">{dream.images.length}</span>
-                                </div>
-                            )}
-
-                            {/* 三点菜单 */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 p-0 text-gray-400 hover:text-purple-300 hover:bg-gray-800/60 rounded-full"
-                                    >
-                                        <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="dream-actions-menu">
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex items-center text-blue-400 hover:text-blue-300"
-                                        onClick={(e) => handleEditClick(e, dream.id)}
-                                    >
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        <span>编辑</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex items-center text-red-500 hover:text-red-400"
-                                        onClick={(e) => handleDeleteClick(e, dream)}
-                                    >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        <span>删除</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {dream.categories && dream.categories.map(category => (
-                            <Badge
-                                key={category.id}
-                                className={`${CATEGORY_COLORS[category.name] || 'bg-gray-500'} text-xs`}
-                            >
-                                {category.display_name}
-                            </Badge>
-                        ))}
-                    </div>
-
-                    {dream.tags && Object.values(dream.tags).some(arr => arr.length > 0) && (
-                        <div className="flex items-center text-xs text-gray-400 mt-2">
-                            {renderTags(dream.tags)}
-                        </div>
-                    )}
-                </CardHeader>
-
-                <CardContent className={`py-2 ${previewImage ? 'with-image' : ''}`}>
-                    <p className="text-sm text-gray-300 dream-content">
-                        {getSummary(dream.content)}
-                    </p>
-                </CardContent>
-
-                <CardFooter className="pt-2 flex justify-between text-xs text-gray-400">
-                    <div className="flex items-center">
-                        <CalIcon className="h-3 w-3 mr-1" />
-                        {dream.created_at ? new Date(dream.created_at).toLocaleDateString() : '未知日期'}
-                    </div>
-                    <div className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {dream.created_at ? new Date(dream.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '未知时间'}
-                    </div>
-                </CardFooter>
-            </Card>
-        );
-    };
-
-    // 渲染加载骨架屏
-    const renderSkeletons = () => (
-        Array(3).fill(0).map((_, index) => (
-            <Card key={`skeleton-${index}`} className="dream-card skeleton-card">
-                <div className="skeleton-image-placeholder"></div>
-                <CardHeader className="pb-2">
-                    <Skeleton className="h-6 w-2/3" />
-                    <div className="flex gap-2 mt-2">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-4 w-16" />
-                    </div>
-                </CardHeader>
-                <CardContent className="py-2">
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-3/4" />
-                </CardContent>
-                <CardFooter className="pt-2 flex justify-between">
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-3 w-24" />
-                </CardFooter>
-            </Card>
-        ))
-    );
-
-    // 筛选栏上方的激活筛选器显示
-    const renderActiveFilters = () => {
-        if (selectedCategories.length === 0 && !selectedDate && selectedTags.length === 0) {
-            return null;
-        }
-
-        return (
-            <div className="active-filters mb-4 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-gray-400 flex items-center">
-                    <Filter className="h-3 w-3 mr-1" />
-                    筛选:
-                </span>
-
-                {selectedCategories.map(cat => (
-                    <Badge
-                        key={cat}
-                        variant="outline"
-                        className="active-filter-badge flex items-center gap-1"
-                    >
-                        <span>{categoryOptions[cat]}</span>
-                        <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleCategoryChange(cat);
-                            }}
-                        />
-                    </Badge>
-                ))}
-
-                {selectedDate && (
-                    <Badge
-                        variant="outline"
-                        className="active-filter-badge flex items-center gap-1"
-                    >
-                        <CalendarIcon className="h-3 w-3 mr-1" />
-                        <span>{format(selectedDate, 'yyyy-MM-dd')}</span>
-                        <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedDate(null);
-                            }}
-                        />
-                    </Badge>
-                )}
-
-                {selectedTags.map(tag => (
-                    <Badge
-                        key={tag}
-                        variant="outline"
-                        className="active-filter-badge flex items-center gap-1"
-                    >
-                        <span>#{tag}</span>
-                        <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleTagSelect(tag);
-                            }}
-                        />
-                    </Badge>
-                ))}
-
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs text-gray-400 hover:text-white clear-filters-btn"
-                    onClick={clearFilters}
-                >
-                    清除全部
-                </Button>
+            <div className="my-dreams-container">
+                <div className="my-dreams-header">
+                    <h1 className="my-dreams-title">
+                        <Moon className="h-8 w-8" />
+                        我的梦境
+                    </h1>
+                </div>
+                <div className="dreams-grid">
+                    {[1, 2, 3, 4].map(i => (
+                        <Card key={i} className="dream-card">
+                            <CardHeader>
+                                <Skeleton className="h-6 w-3/4" />
+                                <Skeleton className="h-4 w-1/2 mt-2" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-20 w-full" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             </div>
         );
-    };
+    }
 
     return (
-        <div className="my-dreams-container max-w-5xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                    <Moon className="h-8 w-8 text-purple-400" />
-                    <h1 className="text-2xl font-bold text-purple-50">我的梦境</h1>
-                </div>
+        <div className="my-dreams-container">
+            <div className="my-dreams-header">
+                <h1 className="my-dreams-title">
+                    <Moon className="h-8 w-8" />
+                    我的梦境
+                </h1>
                 <Button
-                    className="create-dream-btn"
-                    onClick={() => navigate('/create-post')}
+                    onClick={() => navigate('/dreams/create')}
+                    className="create-dream-button"
                 >
-                    <Sparkles className="h-4 w-4 mr-2" />
+                    <Plus className="h-5 w-5 mr-2" />
                     记录新梦境
                 </Button>
             </div>
 
-            {/* 搜索和筛选功能栏 */}
-            <div className="filter-bar mb-6">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="search-container relative flex-1 min-w-[200px]">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                            type="search"
-                            placeholder="搜索我的梦境..."
-                            className="pl-10 bg-gray-800/60 border-gray-700 search-input"
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="filter-controls flex flex-wrap gap-2">
-                        {/* 多选分类筛选 */}
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="category-filter-btn">
-                                    <FolderOpen className="h-4 w-3 mr-1" />
-                                    分类
-                                    {selectedCategories.length > 0 && (
-                                        <Badge className="ml-2 bg-purple-600">{selectedCategories.length}</Badge>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="category-popover">
-                                <div className="space-y-2">
-                                    <h4 className="font-medium text-sm mb-3">选择梦境分类</h4>
-                                    <div className="categories-grid">
-                                        {Object.entries(categoryOptions).map(([name, displayName]) => (
-                                            <div key={name} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={`category-${name}`}
-                                                    checked={selectedCategories.includes(name)}
-                                                    onCheckedChange={() => handleCategoryChange(name)}
-                                                    className={`${CATEGORY_COLORS[name]}`}
-                                                />
-                                                <Label
-                                                    htmlFor={`category-${name}`}
-                                                    className="cursor-pointer text-sm"
-                                                >
-                                                    {displayName}
-                                                </Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        {/* 添加标签云到同一行 */}
-                        {allTags.length > 0 && (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="tags-filter-btn">
-                                        <Tags className="h-4 w-3 mr-1" />
-                                        标签
-                                        {selectedTags.length > 0 && (
-                                            <Badge className="ml-2 bg-purple-600">{selectedTags.length}</Badge>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="tags-popover">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <h4 className="font-medium text-sm">选择标签</h4>
-                                            {selectedTags.length > 0 && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-xs text-purple-300 clear-tags-btn"
-                                                    onClick={() => setSelectedTags([])}
-                                                >
-                                                    清除标签
-                                                </Button>
-                                            )}
-                                        </div>
-                                        <div className="tag-cloud-container">
-                                            <div className="flex flex-wrap gap-2">
-                                                {allTags.map(tag => (
-                                                    <Badge
-                                                        key={tag}
-                                                        className={`tag-cloud-item cursor-pointer ${selectedTags.includes(tag)
-                                                            ? 'bg-purple-600 hover:bg-purple-700'
-                                                            : 'bg-gray-700/70 hover:bg-gray-600/90'
-                                                            }`}
-                                                        onClick={() => handleTagSelect(tag)}
-                                                    >
-                                                        #{tag}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        )}
-
-                        {/* 日期选择器 */}
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className={`date-filter-btn ${selectedDate ? "date-selected" : ""}`}>
-                                    <CalendarIcon className="h-4 w-4 mr-2" />
-                                    {selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "日期"}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <CalendarComponent
-                                    mode="single"
-                                    selected={selectedDate}
-                                    onSelect={setSelectedDate}
-                                    className="rounded-md border"
-                                />
-                            </PopoverContent>
-                        </Popover>
-
-                        {/* 排序*/}
-                        <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger className="w-32 sort-select bg-gray-800/60 border-gray-700">
-                                <SelectValue placeholder="排序" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="date-desc">最新发布</SelectItem>
-                                <SelectItem value="date-asc">最早发布</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-
-
-                        {(selectedCategories.length > 0 || selectedDate || selectedTags.length > 0) && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="clear-all-btn"
-                                onClick={clearFilters}
-                            >
-                                <X className="h-4 w-4 mr-1" />
-                                清除
-                            </Button>
-                        )}
-                    </div>
+            {/* 搜索和筛选栏 */}
+            <div className="search-filter-bar">
+                <div className="search-wrapper">
+                    <Search className="search-icon" />
+                    <Input
+                        type="text"
+                        placeholder="搜索梦境..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="search-input"
+                    />
                 </div>
 
-                {/* 激活的筛选器 */}
-                {renderActiveFilters()}
+                <div className="filter-controls">
+                    <Select value={filterCategory} onValueChange={setFilterCategory}>
+                        <SelectTrigger className="filter-select">
+                            <Filter className="h-4 w-4 mr-2" />
+                            <SelectValue placeholder="筛选分类" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">全部分类</SelectItem>
+                            {Object.entries(CATEGORY_CONFIG).map(([value, config]) => (
+                                <SelectItem key={value} value={value}>
+                                    {config.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="filter-select">
+                            <SelectValue placeholder="排序方式" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="newest">最新优先</SelectItem>
+                            <SelectItem value="oldest">最早优先</SelectItem>
+                            <SelectItem value="title">标题排序</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            {/* 梦境统计 */}
+            <div className="dreams-stats">
+                <div className="stat-item">
+                    <Sparkles className="stat-icon" />
+                    <div className="stat-content">
+                        <span className="stat-value">{dreams.length}</span>
+                        <span className="stat-label">总梦境数</span>
+                    </div>
+                </div>
+                <div className="stat-item">
+                    <Calendar className="stat-icon" />
+                    <div className="stat-content">
+                        <span className="stat-value">
+                            {dreams.filter(d => {
+                                const today = new Date().toDateString();
+                                return new Date(d.dream_date).toDateString() === today;
+                            }).length}
+                        </span>
+                        <span className="stat-label">今日梦境</span>
+                    </div>
+                </div>
             </div>
 
             {/* 梦境列表 */}
-            <div className="dreams-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {dreamsLoading ? (
-                    renderSkeletons()
-                ) : filteredDreams.length > 0 ? (
-                    filteredDreams.map(renderDreamCard)
-                ) : (
-                    <div className="empty-state col-span-full flex flex-col items-center justify-center p-8">
-                        <Moon className="h-16 w-16 text-gray-600 mb-4" />
-                        <h3 className="text-xl font-medium text-gray-400 mb-2">没有找到梦境</h3>
-                        <p className="text-gray-500 text-center mb-4">
-                            {searchQuery || selectedCategories.length > 0 || selectedDate || selectedTags.length > 0
-                                ? "尝试调整您的筛选条件"
-                                : "记录您的第一个梦境，开始探索梦的奥秘"}
-                        </p>
-                        {searchQuery || selectedCategories.length > 0 || selectedDate || selectedTags.length > 0 ? (
-                            <Button variant="outline" onClick={clearFilters}>
-                                清除筛选条件
-                            </Button>
-                        ) : (
-                            <Button onClick={() => navigate('/create-post')}>
-                                创建梦境记录
-                            </Button>
-                        )}
-                    </div>
-                )}
-            </div>
+            {filteredAndSortedDreams.length === 0 ? (
+                <div className="empty-state">
+                    <Moon className="empty-icon" />
+                    <h3 className="empty-title">还没有梦境记录</h3>
+                    <p className="empty-description">
+                        {searchTerm || filterCategory !== 'all'
+                            ? '没有找到匹配的梦境'
+                            : '开始记录你的第一个梦境吧'}
+                    </p>
+                    {!searchTerm && filterCategory === 'all' && (
+                        <Button onClick={() => navigate('/dreams/create')} className="mt-4">
+                            <Plus className="h-4 w-4 mr-2" />
+                            记录梦境
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <div className="dreams-grid">
+                    {filteredAndSortedDreams.map(dream => (
+                        <Card key={dream.id} className="dream-card">
+                            <CardHeader className="dream-card-header">
+                                <div className="dream-card-title-row">
+                                    <h3 className="dream-card-title">{dream.title}</h3>
+                                    <div className="dream-card-actions">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => navigate(`/dreams/${dream.id}`)}
+                                            className="action-icon"
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => navigate(`/dreams/${dream.id}/edit`)}
+                                            className="action-icon"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="action-icon delete-icon"
+                                                    disabled={deletingId === dream.id}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>确认删除</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        确定要删除梦境 "{dream.title}" 吗？此操作无法撤销。
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>取消</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(dream.id)}>
+                                                        确认删除
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                </div>
+                                <div className="dream-card-meta">
+                                    <span className="meta-item">
+                                        <Calendar className="h-3 w-3" />
+                                        {formatDate(dream.dream_date)}
+                                    </span>
+                                    {dream.lucidity_level > 0 && (
+                                        <span className="meta-item lucidity">
+                                            清醒度: {dream.lucidity_level}/5
+                                        </span>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="dream-card-content">
+                                {/* 分类标签 */}
+                                {dream.categories.length > 0 && (
+                                    <div className="dream-categories">
+                                        {dream.categories.map(category => {
+                                            const categoryName = typeof category === 'object' ? category.name : category;
+                                            const config = CATEGORY_CONFIG[categoryName] || { label: categoryName, color: '#6b7280' };
+                                            return (
+                                                <Badge
+                                                    key={typeof category === 'object' ? category.id : category}
+                                                    className="category-badge"
+                                                    style={{
+                                                        backgroundColor: config.color + '20',
+                                                        borderColor: config.color,
+                                                        color: config.color
+                                                    }}
+                                                >
+                                                    {config.label}
+                                                </Badge>
+                                            );
+                                        })}
+                                    </div>
+                                )}
 
-            {/* 删除确认对话框 */}
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent className="bg-gray-900 border border-gray-800">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>确认删除梦境</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            您确定要删除「{dreamToDelete?.title}」吗？此操作无法撤销，删除后梦境记录将永久消失。
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-gray-800 text-gray-200 hover:bg-gray-700 border-gray-700">
-                            取消
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={confirmDelete}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                            删除
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                                {/* 梦境内容预览 */}
+                                <p className="dream-preview">
+                                    {truncateContent(dream.content.replace(/[#*`]/g, ''))}
+                                </p>
+
+                                {/* 标签和情绪 */}
+                                <div className="dream-footer">
+                                    {dream.tags.length > 0 && (
+                                        <div className="dream-tags">
+                                            <Hash className="h-3 w-3" />
+                                            {dream.tags.slice(0, 3).map(tag => (
+                                                <span key={tag.id} className="tag-name">
+                                                    {tag.name}
+                                                </span>
+                                            ))}
+                                            {dream.tags.length > 3 && (
+                                                <span className="tag-more">+{dream.tags.length - 3}</span>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="dream-moods">
+                                        {dream.mood_before_sleep && (
+                                            <span className="mood-icon" title="睡前情绪">
+                                                {MOOD_CONFIG[dream.mood_before_sleep]}
+                                            </span>
+                                        )}
+                                        {dream.mood_in_dream && (
+                                            <span className="mood-icon" title="梦中情绪">
+                                                {MOOD_CONFIG[dream.mood_in_dream]}
+                                            </span>
+                                        )}
+                                        {dream.mood_after_waking && (
+                                            <span className="mood-icon" title="醒后情绪">
+                                                {MOOD_CONFIG[dream.mood_after_waking]}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

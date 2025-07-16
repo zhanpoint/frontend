@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label.jsx";
 import notification from "@/utils/notification";
 import { smsService } from "@/services/notification/sms";
 import { emailService } from "@/services/notification/email";
-import { smsAuth } from "@/services/auth/smsAuth";
-import { emailAuth } from "@/services/auth/emailAuth";
 import { isFeatureEnabled, getAvailableRegisterMethods } from "@/config/features";
 import "./css/DreamTheme.css";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export function RegisterForm() {
     const navigate = useNavigate();
-    const { registerUser } = useAuth();
+    const { register } = useAuth();
 
     // 获取可用的注册方式
     const availableRegisterMethods = getAvailableRegisterMethods();
@@ -52,156 +50,95 @@ export function RegisterForm() {
 
     // 密码可见性状态
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // 验证码计时器状态
+    // 验证码倒计时状态
     const [phoneCountdown, setPhoneCountdown] = useState(0);
     const [emailCountdown, setEmailCountdown] = useState(0);
 
-    // 发送请求状态
+    // 加载状态
     const [isLoading, setIsLoading] = useState(false);
-    const [isSendingPhoneCode, setIsSendingPhoneCode] = useState(false);
-    const [isSendingEmailCode, setIsSendingEmailCode] = useState(false);
 
-    // 新添加的状态
-    const [passwordVisible, setPasswordVisible] = useState(false);
-    const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-
-    // 为邮箱验证码添加倒计时效果
-    useEffect(() => {
-        let timer;
-        if (emailCountdown > 0) {
-            timer = setInterval(() => {
-                setEmailCountdown((prevCount) => {
-                    if (prevCount <= 1) {
-                        clearInterval(timer);
-                        return 0;
-                    }
-                    return prevCount - 1;
-                });
-            }, 1000);
-        }
-        return () => clearInterval(timer);
-    }, [emailCountdown]);
-
-    // 为手机验证码添加倒计时效果
+    // 倒计时效果
     useEffect(() => {
         let timer;
         if (phoneCountdown > 0) {
-            timer = setInterval(() => {
-                setPhoneCountdown((prevCount) => {
-                    if (prevCount <= 1) {
-                        clearInterval(timer);
-                        return 0;
-                    }
-                    return prevCount - 1;
-                });
-            }, 1000);
+            timer = setTimeout(() => setPhoneCountdown(phoneCountdown - 1), 1000);
         }
-        return () => clearInterval(timer);
+        return () => clearTimeout(timer);
     }, [phoneCountdown]);
 
+    useEffect(() => {
+        let timer;
+        if (emailCountdown > 0) {
+            timer = setTimeout(() => setEmailCountdown(emailCountdown - 1), 1000);
+        }
+        return () => clearTimeout(timer);
+    }, [emailCountdown]);
+
     // 处理手机号注册表单变化
-    const handlePhoneFormChange = (e) => {
+    const handlePhoneFormChange = useCallback((e) => {
         const { name, value } = e.target;
-        setPhoneFormData({ ...phoneFormData, [name]: value });
+        setPhoneFormData(prev => ({ ...prev, [name]: value }));
 
-        // 清除相关字段的错误
+        // 清除对应字段的错误
         if (errors[name]) {
-            setErrors({ ...errors, [name]: "" });
+            setErrors(prev => ({ ...prev, [name]: "" }));
         }
-
-        // 如果修改了密码，检查确认密码
-        if (name === "password" && phoneFormData.confirmPassword) {
-            if (value !== phoneFormData.confirmPassword) {
-                setErrors({ ...errors, confirmPassword: "两次输入的密码不一致" });
-            } else {
-                setErrors({ ...errors, confirmPassword: "" });
-            }
-        }
-
-        // 如果修改了确认密码，检查与密码是否一致
-        if (name === "confirmPassword") {
-            if (value !== phoneFormData.password) {
-                setErrors({ ...errors, confirmPassword: "两次输入的密码不一致" });
-            } else {
-                setErrors({ ...errors, confirmPassword: "" });
-            }
-        }
-    };
+    }, [errors]);
 
     // 处理邮箱注册表单变化
-    const handleEmailFormChange = (e) => {
+    const handleEmailFormChange = useCallback((e) => {
         const { name, value } = e.target;
-        setEmailFormData({ ...emailFormData, [name]: value });
+        setEmailFormData(prev => ({ ...prev, [name]: value }));
 
-        // 清除相关字段的错误
+        // 清除对应字段的错误
         if (errors[name]) {
-            setErrors({ ...errors, [name]: "" });
+            setErrors(prev => ({ ...prev, [name]: "" }));
         }
-
-        // 如果修改了密码，检查确认密码
-        if (name === "password" && emailFormData.confirmPassword) {
-            if (value !== emailFormData.confirmPassword) {
-                setErrors({ ...errors, confirmPassword: "两次输入的密码不一致" });
-            } else {
-                setErrors({ ...errors, confirmPassword: "" });
-            }
-        }
-
-        // 如果修改了确认密码，检查与密码是否一致
-        if (name === "confirmPassword") {
-            if (value !== emailFormData.password) {
-                setErrors({ ...errors, confirmPassword: "两次输入的密码不一致" });
-            } else {
-                setErrors({ ...errors, confirmPassword: "" });
-            }
-        }
-    };
+    }, [errors]);
 
     // 验证手机号注册表单
     const validatePhoneForm = () => {
         const newErrors = {};
+        const { username, password, confirmPassword, phone, verificationCode } = phoneFormData;
 
         // 验证用户名
-        if (!phoneFormData.username) {
+        if (!username.trim()) {
             newErrors.username = "请输入用户名";
-        } else if (phoneFormData.username.length < 3) {
-            newErrors.username = "用户名长度不能少于3个字符";
-        } else if (phoneFormData.username.length > 20) {
+        } else if (username.length < 3) {
+            newErrors.username = "用户名长度至少为3个字符";
+        } else if (username.length > 20) {
             newErrors.username = "用户名长度不能超过20个字符";
         }
 
         // 验证密码
-        if (!phoneFormData.password) {
+        if (!password) {
             newErrors.password = "请输入密码";
-        } else if (phoneFormData.password.length < 8) {
-            newErrors.password = "密码长度不能少于8个字符";
-        } else if (!/\d/.test(phoneFormData.password)) {
-            newErrors.password = "密码必须包含至少一个数字";
-        } else if (!/[a-zA-Z]/.test(phoneFormData.password)) {
-            newErrors.password = "密码必须包含至少一个字母";
+        } else if (password.length < 8) {
+            newErrors.password = "密码长度至少为8个字符";
+        } else if (password.length > 32) {
+            newErrors.password = "密码长度不能超过32个字符";
         }
 
         // 验证确认密码
-        if (!phoneFormData.confirmPassword) {
-            newErrors.confirmPassword = "请再次输入密码";
-        } else if (phoneFormData.password !== phoneFormData.confirmPassword) {
+        if (!confirmPassword) {
+            newErrors.confirmPassword = "请确认密码";
+        } else if (confirmPassword !== password) {
             newErrors.confirmPassword = "两次输入的密码不一致";
         }
 
         // 验证手机号
-        if (!phoneFormData.phone) {
+        if (!phone) {
             newErrors.phone = "请输入手机号";
-        } else if (!/^1[3-9]\d{9}$/.test(phoneFormData.phone)) {
+        } else if (!/^1[3-9]\d{9}$/.test(phone)) {
             newErrors.phone = "请输入有效的手机号";
         }
 
         // 验证验证码
-        if (!phoneFormData.verificationCode) {
+        if (!verificationCode) {
             newErrors.verificationCode = "请输入验证码";
-        } else if (phoneFormData.verificationCode.length !== 6) {
-            newErrors.verificationCode = "验证码必须是6位数字";
+        } else if (!/^\d{6}$/.test(verificationCode)) {
+            newErrors.verificationCode = "验证码为6位数字";
         }
 
         setErrors(newErrors);
@@ -211,46 +148,45 @@ export function RegisterForm() {
     // 验证邮箱注册表单
     const validateEmailForm = () => {
         const newErrors = {};
+        const { username, password, confirmPassword, email, verificationCode } = emailFormData;
 
         // 验证用户名
-        if (!emailFormData.username) {
+        if (!username.trim()) {
             newErrors.username = "请输入用户名";
-        } else if (emailFormData.username.length < 3) {
-            newErrors.username = "用户名长度不能少于3个字符";
-        } else if (emailFormData.username.length > 20) {
+        } else if (username.length < 3) {
+            newErrors.username = "用户名长度至少为3个字符";
+        } else if (username.length > 20) {
             newErrors.username = "用户名长度不能超过20个字符";
         }
 
         // 验证密码
-        if (!emailFormData.password) {
+        if (!password) {
             newErrors.password = "请输入密码";
-        } else if (emailFormData.password.length < 8) {
-            newErrors.password = "密码长度不能少于8个字符";
-        } else if (!/\d/.test(emailFormData.password)) {
-            newErrors.password = "密码必须包含至少一个数字";
-        } else if (!/[a-zA-Z]/.test(emailFormData.password)) {
-            newErrors.password = "密码必须包含至少一个字母";
+        } else if (password.length < 8) {
+            newErrors.password = "密码长度至少为8个字符";
+        } else if (password.length > 32) {
+            newErrors.password = "密码长度不能超过32个字符";
         }
 
         // 验证确认密码
-        if (!emailFormData.confirmPassword) {
-            newErrors.confirmPassword = "请再次输入密码";
-        } else if (emailFormData.password !== emailFormData.confirmPassword) {
+        if (!confirmPassword) {
+            newErrors.confirmPassword = "请确认密码";
+        } else if (confirmPassword !== password) {
             newErrors.confirmPassword = "两次输入的密码不一致";
         }
 
         // 验证邮箱
-        if (!emailFormData.email) {
+        if (!email) {
             newErrors.email = "请输入邮箱地址";
-        } else if (!emailService.validateEmail(emailFormData.email)) {
+        } else if (!emailService.validateEmail(email)) {
             newErrors.email = "请输入有效的邮箱地址";
         }
 
         // 验证验证码
-        if (!emailFormData.verificationCode) {
+        if (!verificationCode) {
             newErrors.verificationCode = "请输入验证码";
-        } else if (emailFormData.verificationCode.length !== 6) {
-            newErrors.verificationCode = "验证码必须是6位数字";
+        } else if (!/^\d{6}$/.test(verificationCode)) {
+            newErrors.verificationCode = "验证码为6位数字";
         }
 
         setErrors(newErrors);
@@ -259,219 +195,141 @@ export function RegisterForm() {
 
     // 发送手机验证码
     const handleSendPhoneVerificationCode = async () => {
-        // 验证手机号
         if (!phoneFormData.phone) {
-            setErrors({ ...errors, phone: "请输入手机号" });
+            setErrors(prev => ({ ...prev, phone: "请输入手机号" }));
             return;
-        } else if (!/^1[3-9]\d{9}$/.test(phoneFormData.phone)) {
-            setErrors({ ...errors, phone: "请输入有效的手机号" });
+        }
+
+        if (!/^1[3-9]\d{9}$/.test(phoneFormData.phone)) {
+            setErrors(prev => ({ ...prev, phone: "请输入有效的手机号" }));
             return;
         }
 
         try {
-            // 开始加载状态
-            setIsSendingPhoneCode(true);
-
-            // 使用smsService发送验证码，指定注册场景
+            setIsLoading(true);
             const response = await smsService.sendVerificationCode(phoneFormData.phone, 'register');
 
-            // 成功情况 - 响应码200
             if (response.data.code === 200) {
-                // 显示成功信息
-                notification.success(response.data.message || "验证码发送成功");
-
-                // 开始倒计时
+                notification.success("验证码发送成功，请查收短信");
                 setPhoneCountdown(60);
+                setErrors(prev => ({ ...prev, phone: "" }));
             } else {
-                setErrors({
-                    ...errors,
-                    phone: response.data.message || "验证码发送可能失败，请稍后再试"
-                });
                 notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
         } catch (error) {
-            console.error("发送验证码失败:", error);
+            const errorMessage = error.response?.data?.message || "发送验证码失败，请稍后再试";
+            notification.error(errorMessage);
 
-            if (error.response) {
-                const responseData = error.response.data;
-                if (responseData && responseData.message) {
-                    setErrors({ ...errors, phone: responseData.message });
-                    notification.error(responseData.message);
-                } else {
-                    setErrors({ ...errors, phone: "验证码发送失败，请稍后再试" });
-                    notification.error("验证码发送失败，请稍后再试");
-                }
+            if (error.response?.data?.field) {
+                setErrors({ ...errors, [error.response.data.field]: errorMessage });
             } else {
-                setErrors({ ...errors, phone: "网络错误，请检查您的网络连接" });
-                notification.error("网络错误，请检查您的网络连接");
-            }
-        } finally {
-            setIsSendingPhoneCode(false);
-        }
-    };
-
-    // 发送邮箱验证码
-    const handleSendEmailVerificationCode = async () => {
-        // 验证邮箱
-        if (!emailFormData.email) {
-            setErrors({ ...errors, email: "请输入邮箱地址" });
-            return;
-        } else if (!emailService.validateEmail(emailFormData.email)) {
-            setErrors({ ...errors, email: "请输入有效的邮箱地址" });
-            return;
-        }
-
-        try {
-            // 开始加载状态
-            setIsSendingEmailCode(true);
-
-            // 使用emailService发送验证码，指定注册场景
-            const response = await emailService.sendVerificationCode(emailFormData.email, 'register');
-
-            // 成功情况 - 响应码200
-            if (response.data.code === 200) {
-                // 显示成功信息
-                notification.success(response.data.message || "验证码发送成功，请查收邮箱");
-
-                // 开始倒计时
-                setEmailCountdown(60);
-            } else {
-                setErrors({
-                    ...errors,
-                    email: response.data.message || "验证码发送可能失败，请稍后再试"
-                });
-                notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
-            }
-        } catch (error) {
-            console.error("发送邮箱验证码失败:", error);
-
-            if (error.response) {
-                const responseData = error.response.data;
-                if (responseData && responseData.message) {
-                    setErrors({ ...errors, email: responseData.message });
-                    notification.error(responseData.message);
-                } else {
-                    setErrors({ ...errors, email: "验证码发送失败，请稍后再试" });
-                    notification.error("验证码发送失败，请稍后再试");
-                }
-            } else {
-                setErrors({ ...errors, email: "网络错误，请检查您的网络连接" });
-                notification.error("网络错误，请检查您的网络连接");
-            }
-        } finally {
-            setIsSendingEmailCode(false);
-        }
-    };
-
-    // 处理手机号注册提交
-    const handlePhoneSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!validatePhoneForm()) {
-            return;
-        }
-
-        setIsLoading(true);
-
-        try {
-            const response = await smsAuth.registerWithCode({
-                username: phoneFormData.username,
-                phone_number: phoneFormData.phone,
-                password: phoneFormData.password,
-                code: phoneFormData.verificationCode,
-            });
-
-            if (response.data.code === 200 || response.data.code === 201) {
-                notification.success("注册成功！请登录您的账户");
-                navigate("/login");
-            } else {
-                setErrors({ general: response.data.message || "注册失败，请重试" });
-            }
-        } catch (error) {
-            console.error("注册失败:", error);
-
-            if (error.response) {
-                const responseData = error.response.data;
-
-                if (responseData.errors && typeof responseData.errors === 'object') {
-                    // 处理字段级别的错误
-                    const fieldErrors = {};
-                    Object.keys(responseData.errors).forEach(key => {
-                        if (Array.isArray(responseData.errors[key])) {
-                            fieldErrors[key] = responseData.errors[key][0];
-                        } else {
-                            fieldErrors[key] = responseData.errors[key];
-                        }
-                    });
-                    setErrors(fieldErrors);
-                } else if (responseData.message) {
-                    setErrors({ general: responseData.message });
-                } else {
-                    setErrors({ general: "注册失败，请重试" });
-                }
-
-                notification.error(responseData.message || "注册失败，请重试");
-            } else {
-                setErrors({ general: "网络错误，请稍后重试" });
-                notification.error("网络错误，请稍后重试");
+                setErrors({ ...errors, phone: errorMessage });
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    // 处理邮箱注册提交
-    const handleEmailSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!validateEmailForm()) {
+    // 发送邮箱验证码
+    const handleSendEmailVerificationCode = async () => {
+        if (!emailFormData.email) {
+            setErrors(prev => ({ ...prev, email: "请输入邮箱地址" }));
             return;
         }
 
-        setIsLoading(true);
+        if (!emailService.validateEmail(emailFormData.email)) {
+            setErrors(prev => ({ ...prev, email: "请输入有效的邮箱地址" }));
+            return;
+        }
 
         try {
-            const response = await emailAuth.registerWithEmailCode({
-                username: emailFormData.username,
-                email: emailFormData.email,
-                password: emailFormData.password,
-                code: emailFormData.verificationCode,
+            setIsLoading(true);
+            const response = await emailService.sendVerificationCode(emailFormData.email, 'register');
+
+            if (response.data.code === 200) {
+                notification.success("验证码发送成功，请查收邮箱");
+                setEmailCountdown(60);
+                setErrors(prev => ({ ...prev, email: "" }));
+            } else {
+                notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "发送验证码失败，请稍后再试";
+            notification.error(errorMessage);
+
+            if (error.response?.data?.field) {
+                setErrors({ ...errors, [error.response.data.field]: errorMessage });
+            } else {
+                setErrors({ ...errors, email: errorMessage });
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 处理手机号注册
+    const handlePhoneSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!validatePhoneForm()) return;
+
+        setIsLoading(true);
+        setErrors({});
+
+        try {
+            const result = await register('sms', {
+                username: phoneFormData.username,
+                password: phoneFormData.password,
+                phone: phoneFormData.phone,
+                verificationCode: phoneFormData.verificationCode,
             });
 
-            if (response.data.code === 200 || response.data.code === 201) {
+            if (result.success) {
                 notification.success("注册成功！请登录您的账户");
                 navigate("/login");
             } else {
-                setErrors({ general: response.data.message || "注册失败，请重试" });
+                if (result.field) {
+                    setErrors({ [result.field]: result.message });
+                } else {
+                    setErrors({ general: result.message });
+                }
             }
         } catch (error) {
-            console.error("邮箱注册失败:", error);
+            setErrors({ general: "注册失败，请重试" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-            if (error.response) {
-                const responseData = error.response.data;
+    // 处理邮箱注册
+    const handleEmailSubmit = async (e) => {
+        e.preventDefault();
 
-                if (responseData.errors && typeof responseData.errors === 'object') {
-                    // 处理字段级别的错误
-                    const fieldErrors = {};
-                    Object.keys(responseData.errors).forEach(key => {
-                        if (Array.isArray(responseData.errors[key])) {
-                            fieldErrors[key] = responseData.errors[key][0];
-                        } else {
-                            fieldErrors[key] = responseData.errors[key];
-                        }
-                    });
-                    setErrors(fieldErrors);
-                } else if (responseData.message) {
-                    setErrors({ general: responseData.message });
-                } else {
-                    setErrors({ general: "注册失败，请重试" });
-                }
+        if (!validateEmailForm()) return;
 
-                notification.error(responseData.message || "注册失败，请重试");
+        setIsLoading(true);
+        setErrors({});
+
+        try {
+            const result = await register('email', {
+                username: emailFormData.username,
+                password: emailFormData.password,
+                email: emailFormData.email,
+                verificationCode: emailFormData.verificationCode,
+            });
+
+            if (result.success) {
+                notification.success("注册成功！请登录您的账户");
+                navigate("/login");
             } else {
-                setErrors({ general: "网络错误，请稍后重试" });
-                notification.error("网络错误，请稍后重试");
+                if (result.field) {
+                    setErrors({ [result.field]: result.message });
+                } else {
+                    setErrors({ general: result.message });
+                }
             }
+        } catch (error) {
+            setErrors({ general: "注册失败，请重试" });
         } finally {
             setIsLoading(false);
         }
@@ -481,8 +339,6 @@ export function RegisterForm() {
     const handleGoToLogin = () => {
         navigate("/login");
     };
-
-
 
     return (
         <Card className="w-full max-w-md mx-auto card">
@@ -514,8 +370,8 @@ export function RegisterForm() {
                     {isFeatureEnabled('SMS_SERVICE_ENABLED') && (
                         <TabsContent value="phone" className="space-y-4">
                             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-                                <div className="form-field">
-                                    <Label htmlFor="phone-username" className="form-label">用户名</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone-username">用户名</Label>
                                     <div className="input-container">
                                         <User className="input-icon" />
                                         <Input
@@ -525,7 +381,7 @@ export function RegisterForm() {
                                             placeholder="请输入用户名"
                                             value={phoneFormData.username}
                                             onChange={handlePhoneFormChange}
-                                            className={`pl-10 ${errors.username ? 'input-error' : ''}`}
+                                            className={`input ${errors.username ? 'input-error' : ''}`}
                                         />
                                     </div>
                                     {errors.username && (
@@ -533,8 +389,8 @@ export function RegisterForm() {
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="phone-password" className="form-label">密码</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone-password">密码</Label>
                                     <div className="input-container">
                                         <Lock className="input-icon" />
                                         <Input
@@ -544,17 +400,19 @@ export function RegisterForm() {
                                             placeholder="请输入密码"
                                             value={phoneFormData.password}
                                             onChange={handlePhoneFormChange}
-                                            className={`pl-10 pr-10 ${errors.password ? 'input-error' : ''}`}
+                                            className={`input ${errors.password ? 'input-error' : ''}`}
                                         />
                                         <Button
                                             type="button"
+                                            variant="ghost"
+                                            size="icon"
                                             className="password-toggle"
                                             onClick={() => setShowPassword(!showPassword)}
                                         >
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </Button>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-muted-foreground mt-1">
                                         密码需包含至少8个字符，包括字母、数字
                                     </p>
                                     {errors.password && (
@@ -562,34 +420,27 @@ export function RegisterForm() {
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="phone-confirmPassword" className="form-label">确认密码</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone-confirmPassword">确认密码</Label>
                                     <div className="input-container">
                                         <Lock className="input-icon" />
                                         <Input
                                             id="phone-confirmPassword"
                                             name="confirmPassword"
-                                            type={showConfirmPassword ? "text" : "password"}
+                                            type={showPassword ? "text" : "password"}
                                             placeholder="请再次输入密码"
                                             value={phoneFormData.confirmPassword}
                                             onChange={handlePhoneFormChange}
-                                            className={`pl-10 pr-10 ${errors.confirmPassword ? 'input-error' : ''}`}
+                                            className={`input ${errors.confirmPassword ? 'input-error' : ''}`}
                                         />
-                                        <Button
-                                            type="button"
-                                            className="password-toggle"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        >
-                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </Button>
                                     </div>
                                     {errors.confirmPassword && (
                                         <p className="error-message">{errors.confirmPassword}</p>
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="phone" className="form-label">手机号</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">手机号</Label>
                                     <div className="input-container">
                                         <Phone className="input-icon" />
                                         <Input
@@ -599,7 +450,7 @@ export function RegisterForm() {
                                             placeholder="请输入手机号"
                                             value={phoneFormData.phone}
                                             onChange={handlePhoneFormChange}
-                                            className={`pl-10 ${errors.phone ? 'input-error' : ''}`}
+                                            className={`input ${errors.phone ? 'input-error' : ''}`}
                                         />
                                     </div>
                                     {errors.phone && (
@@ -607,8 +458,8 @@ export function RegisterForm() {
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="phone-verificationCode" className="form-label">验证码</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone-verificationCode">验证码</Label>
                                     <div className="verification-container">
                                         <div className="input-container flex-1">
                                             <Shield className="input-icon" />
@@ -616,18 +467,17 @@ export function RegisterForm() {
                                                 id="phone-verificationCode"
                                                 name="verificationCode"
                                                 type="text"
-                                                placeholder="请输入6位验证码"
+                                                placeholder="请输入验证码"
                                                 value={phoneFormData.verificationCode}
                                                 onChange={handlePhoneFormChange}
                                                 className={`verification-input ${errors.verificationCode ? 'input-error' : ''}`}
-                                                maxLength="6"
                                             />
                                         </div>
                                         <Button
                                             type="button"
                                             onClick={handleSendPhoneVerificationCode}
-                                            disabled={phoneCountdown > 0 || isSendingPhoneCode}
-                                            className={`verification-button ${isSendingPhoneCode ? 'is-loading' : ''}`}
+                                            disabled={phoneCountdown > 0 || isLoading}
+                                            className="verification-button"
                                         >
                                             {phoneCountdown > 0 ? `${phoneCountdown}s` : "获取验证码"}
                                         </Button>
@@ -638,7 +488,7 @@ export function RegisterForm() {
                                 </div>
 
                                 {errors.general && (
-                                    <div className="error-message text-center">
+                                    <div className="text-sm text-red-500 text-center error-message">
                                         {errors.general}
                                     </div>
                                 )}
@@ -654,8 +504,8 @@ export function RegisterForm() {
                     {isFeatureEnabled('EMAIL_SERVICE_ENABLED') && (
                         <TabsContent value="email" className="space-y-4">
                             <form onSubmit={handleEmailSubmit} className="space-y-4">
-                                <div className="form-field">
-                                    <Label htmlFor="email-username" className="form-label">用户名</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-username">用户名</Label>
                                     <div className="input-container">
                                         <User className="input-icon" />
                                         <Input
@@ -665,7 +515,7 @@ export function RegisterForm() {
                                             placeholder="请输入用户名"
                                             value={emailFormData.username}
                                             onChange={handleEmailFormChange}
-                                            className={`pl-10 ${errors.username ? 'input-error' : ''}`}
+                                            className={`input ${errors.username ? 'input-error' : ''}`}
                                         />
                                     </div>
                                     {errors.username && (
@@ -673,8 +523,8 @@ export function RegisterForm() {
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="email-password" className="form-label">密码</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-password">密码</Label>
                                     <div className="input-container">
                                         <Lock className="input-icon" />
                                         <Input
@@ -684,17 +534,19 @@ export function RegisterForm() {
                                             placeholder="请输入密码"
                                             value={emailFormData.password}
                                             onChange={handleEmailFormChange}
-                                            className={`pl-10 pr-10 ${errors.password ? 'input-error' : ''}`}
+                                            className={`input ${errors.password ? 'input-error' : ''}`}
                                         />
                                         <Button
                                             type="button"
+                                            variant="ghost"
+                                            size="icon"
                                             className="password-toggle"
                                             onClick={() => setShowPassword(!showPassword)}
                                         >
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </Button>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-muted-foreground mt-1">
                                         密码需包含至少8个字符，包括字母、数字
                                     </p>
                                     {errors.password && (
@@ -702,44 +554,37 @@ export function RegisterForm() {
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="email-confirmPassword" className="form-label">确认密码</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-confirmPassword">确认密码</Label>
                                     <div className="input-container">
                                         <Lock className="input-icon" />
                                         <Input
                                             id="email-confirmPassword"
                                             name="confirmPassword"
-                                            type={showConfirmPassword ? "text" : "password"}
+                                            type={showPassword ? "text" : "password"}
                                             placeholder="请再次输入密码"
                                             value={emailFormData.confirmPassword}
                                             onChange={handleEmailFormChange}
-                                            className={`pl-10 pr-10 ${errors.confirmPassword ? 'input-error' : ''}`}
+                                            className={`input ${errors.confirmPassword ? 'input-error' : ''}`}
                                         />
-                                        <Button
-                                            type="button"
-                                            className="password-toggle"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        >
-                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </Button>
                                     </div>
                                     {errors.confirmPassword && (
                                         <p className="error-message">{errors.confirmPassword}</p>
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="email" className="form-label">邮箱地址</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-address">邮箱地址</Label>
                                     <div className="input-container">
                                         <Mail className="input-icon" />
                                         <Input
-                                            id="email"
+                                            id="email-address"
                                             name="email"
                                             type="email"
                                             placeholder="请输入邮箱地址"
                                             value={emailFormData.email}
                                             onChange={handleEmailFormChange}
-                                            className={`pl-10 ${errors.email ? 'input-error' : ''}`}
+                                            className={`input ${errors.email ? 'input-error' : ''}`}
                                         />
                                     </div>
                                     {errors.email && (
@@ -747,8 +592,8 @@ export function RegisterForm() {
                                     )}
                                 </div>
 
-                                <div className="form-field">
-                                    <Label htmlFor="email-verificationCode" className="form-label">验证码</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-verificationCode">验证码</Label>
                                     <div className="verification-container">
                                         <div className="input-container flex-1">
                                             <Shield className="input-icon" />
@@ -756,18 +601,17 @@ export function RegisterForm() {
                                                 id="email-verificationCode"
                                                 name="verificationCode"
                                                 type="text"
-                                                placeholder="请输入6位验证码"
+                                                placeholder="请输入验证码"
                                                 value={emailFormData.verificationCode}
                                                 onChange={handleEmailFormChange}
                                                 className={`verification-input ${errors.verificationCode ? 'input-error' : ''}`}
-                                                maxLength="6"
                                             />
                                         </div>
                                         <Button
                                             type="button"
                                             onClick={handleSendEmailVerificationCode}
-                                            disabled={emailCountdown > 0 || isSendingEmailCode}
-                                            className={`verification-button ${isSendingEmailCode ? 'is-loading' : ''}`}
+                                            disabled={emailCountdown > 0 || isLoading}
+                                            className="verification-button"
                                         >
                                             {emailCountdown > 0 ? `${emailCountdown}s` : "获取验证码"}
                                         </Button>
@@ -778,7 +622,7 @@ export function RegisterForm() {
                                 </div>
 
                                 {errors.general && (
-                                    <div className="error-message text-center">
+                                    <div className="text-sm text-red-500 text-center error-message">
                                         {errors.general}
                                     </div>
                                 )}
@@ -791,15 +635,16 @@ export function RegisterForm() {
                     )}
                 </Tabs>
             </CardContent>
-
-            <CardFooter className="flex flex-col space-y-2">
-                <div className="text-sm text-center login-link">
-                    已有账户？{" "}
-                    <button onClick={handleGoToLogin} className="text-primary hover:underline">
+            <CardFooter>
+                <div className="text-center w-full">
+                    <span className="text-sm text-muted-foreground">已有账户？</span>
+                    <Button variant="link" onClick={handleGoToLogin} className="text-primary p-0 ml-1">
                         立即登录
-                    </button>
+                    </Button>
                 </div>
             </CardFooter>
         </Card>
     );
-} 
+}
+
+export default RegisterForm; 

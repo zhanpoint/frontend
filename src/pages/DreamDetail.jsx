@@ -1,507 +1,488 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useDreams } from "@/hooks/useDreams";
-import { useAuth } from "@/hooks/useAuth";
-import ReactMarkdown from 'react-markdown';
-import tokenManager from "@/services/auth/tokenManager";
-import {
-    Moon,
-    Calendar,
-    Clock,
-    MapPin,
-    Users,
-    ArrowLeft,
-    Bookmark,
-    Star,
-    Share2,
-    HelpCircle,
-    AlertCircle,
-    Palette
-} from "lucide-react";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle
-} from "@/components/ui/card.jsx";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button.jsx";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
-import notification from "@/utils/notification";
-import DreamImageWebSocketClient from '@/services/webSocket/DreamImageWebSocketClient.js';
-import "./css/DreamDetail.css";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Calendar, User, Edit, Trash2, Sparkles, Moon, Hash, Clock, Bed, Sun, Star, Brain, Heart, Zap, Repeat, BookOpen, Shield, Users, Globe, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/hooks/useAuth';
+import notification from '@/utils/notification';
+import api from '@/services/api';
+import { cn } from '@/lib/utils';
+import './css/DreamDetail.css';
 
-// 常量配置对象
-const CONFIG = {
-    categories: {
-        normal: "bg-gray-500", memorable: "bg-blue-500", indicate: "bg-cyan-500",
-        archetypal: "bg-purple-500", lucid: "bg-green-500", nightmare: "bg-red-500",
-        repeating: "bg-yellow-500", sleep_paralysis: "bg-indigo-500"
-    },
-    tags: {
-        theme: { icon: <Palette className="h-3 w-3" />, class: "dream-tag-theme" },
-        character: { icon: <Users className="h-3 w-3" />, class: "dream-tag-character" },
-        location: { icon: <MapPin className="h-3 w-3" />, class: "dream-tag-location" }
-    },
-    tooltips: [
-        { tip: '收藏梦境', icon: <Star /> },
-        { tip: '添加书签', icon: <Bookmark /> },
-        { tip: '分享梦境', icon: <Share2 /> }
-    ]
+// 梦境分类配置
+const CATEGORY_CONFIG = {
+    normal: { label: '普通梦境', color: '#6366f1' },
+    lucid: { label: '清醒梦', color: '#8b5cf6' },
+    nightmare: { label: '噩梦', color: '#ef4444' },
+    recurring: { label: '重复梦', color: '#f59e0b' },
+    prophetic: { label: '预知梦', color: '#10b981' },
+    healing: { label: '治愈梦', color: '#06b6d4' },
+    spiritual: { label: '灵性梦境', color: '#ec4899' },
+    creative: { label: '创意梦境', color: '#f97316' },
 };
 
-// 格式化工具函数
-const formatUtils = {
-    date: dateString => {
-        if (!dateString) return "未知日期";
-        const date = new Date(dateString);
-        return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
-    },
-    time: dateString => {
-        if (!dateString) return "未知时间";
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    }
+// 情绪配置
+const MOOD_CONFIG = {
+    very_negative: { label: '非常消极', icon: '😢', color: '#ef4444' },
+    negative: { label: '消极', icon: '😔', color: '#f59e0b' },
+    neutral: { label: '中性', icon: '😐', color: '#6b7280' },
+    positive: { label: '积极', icon: '😊', color: '#10b981' },
+    very_positive: { label: '非常积极', icon: '😄', color: '#06b6d4' },
 };
 
-// Markdown渲染组件
-const MarkdownRenderer = ({ content }) => {
-    const markdownComponents = {
-        img: ({ node, ...props }) => {
-            const isValidUrl = props.src && (props.src.startsWith('http') || props.src.startsWith('data:'));
-
-            if (!isValidUrl) {
-                return (
-                    <div className="flex items-center justify-center bg-red-900/20 border border-red-800/50 rounded-md p-4 my-4">
-                        <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                        <span className="text-sm text-red-300">图片加载失败</span>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="relative rounded-md overflow-hidden transition-all duration-300 hover:shadow-md hover:shadow-purple-900/30">
-                    <img
-                        {...props}
-                        className="rounded-md max-w-full transition-all duration-300 hover:scale-[1.01]"
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '';
-                            e.target.alt = '图片加载失败';
-                            e.target.className = 'hidden';
-                            e.target.parentNode.classList.add('img-error');
-                        }}
-                        loading="lazy"
-                        alt={props.alt || "梦境图片"}
-                    />
-                </div>
-            );
-        },
-        h1: ({ ...props }) => <h1 className="text-2xl font-bold text-purple-100 my-4" {...props} />,
-        h2: ({ ...props }) => <h2 className="text-xl font-bold text-purple-200 my-3" {...props} />,
-        h3: ({ ...props }) => <h3 className="text-lg font-bold text-purple-300 my-2" {...props} />,
-        h4: ({ ...props }) => <h4 className="text-base font-bold text-purple-400 my-2" {...props} />,
-        p: ({ ...props }) => <p className="my-2 text-gray-200" {...props} />,
-        ul: ({ ...props }) => <ul className="list-disc pl-6 my-4 space-y-1" {...props} />,
-        ol: ({ ...props }) => <ol className="list-decimal pl-6 my-4 space-y-1" {...props} />,
-        li: ({ ...props }) => <li className="text-gray-300" {...props} />,
-        blockquote: ({ ...props }) => <blockquote className="border-l-4 border-purple-600 pl-4 italic text-gray-400 my-4" {...props} />,
-        a: ({ ...props }) => <a className="text-blue-400 hover:text-blue-300 underline" {...props} />
-    };
-
-    return (
-        <div className="dream-content text-gray-100 leading-relaxed prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>
-        </div>
-    );
+// 睡眠质量配置
+const SLEEP_QUALITY_CONFIG = {
+    1: { label: '很差', color: '#ef4444' },
+    2: { label: '较差', color: '#f59e0b' },
+    3: { label: '一般', color: '#6b7280' },
+    4: { label: '良好', color: '#10b981' },
+    5: { label: '很好', color: '#06b6d4' },
 };
 
-/**
- * 梦境详情页面组件
- */
+// 隐私设置配置
+const PRIVACY_CONFIG = {
+    private: { label: '私人', icon: Shield, color: '#6b7280' },
+    public: { label: '公开', icon: Globe, color: '#10b981' },
+    friends: { label: '好友可见', icon: Users, color: '#3b82f6' },
+};
+
 const DreamDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
-    const { dreams, isLoading: dreamsLoading, getDreamById, fetchDreams, addOrUpdateDream } = useDreams();
+    const { user } = useAuth();
     const [dream, setDream] = useState(null);
-    const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
-    const socketRef = useRef(null);
-    const updateContentDebounceRef = useRef(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showFullContent, setShowFullContent] = useState(false);
 
-    // 处理图片更新并更新内容
-    const processImagesUpdate = useCallback((images) => {
-        if (!images?.length) return false;
-
-        const dreamData = getDreamById(id) || dream;
-        if (!dreamData) {
-            fetchDreams().then(() => {
-                const freshDream = getDreamById(id);
-                if (freshDream) {
-                    setDream(freshDream);
-                    setTimeout(() => updateContent(freshDream), 100);
-                } else {
-                    notification.error('无法加载梦境数据');
-                }
-            });
-            return false;
-        }
-
-        // 更新内容中的图片
-        const updateContent = (dreamData) => {
-            if (!dreamData) return false;
-            try {
-                const updatedDream = { ...dreamData };
-                const sortedImages = [...images].sort((a, b) => a.position - b.position);
-                let content = updatedDream.content || "";
-                let offset = 0;
-
-                for (const image of sortedImages) {
-                    if (!image.url) continue;
-                    const position = image.position + offset;
-                    const imageMarkdown = `![梦境图片](${image.url})`;
-
-                    if (position <= content.length) {
-                        content = content.substring(0, position) + imageMarkdown + content.substring(position);
-                        offset += imageMarkdown.length;
-                    } else {
-                        const newLinePrefix = !content.endsWith('\n\n') ? (content.endsWith('\n') ? '\n' : '\n\n') : '';
-                        content += newLinePrefix + imageMarkdown;
-                    }
-                }
-
-                updatedDream.content = content;
-                setDream(updatedDream);
-                addOrUpdateDream(updatedDream);
-                notification.success('图片处理完成！已成功添加到您的梦境记录中');
-                return true;
-            } catch {
-                notification.error('更新梦境内容失败');
-                return false;
-            }
-        };
-
-        return updateContent(dreamData);
-    }, [dream, id, getDreamById, fetchDreams, addOrUpdateDream]);
-
-    // WebSocket消息处理
-    const handleImageUpdate = useCallback((data) => {
-        if (data.dream_id !== parseInt(id)) return;
-
-        const latestDream = getDreamById(id);
-        if (latestDream && (!dream || dream.id !== latestDream.id)) {
-            setDream(latestDream);
-        }
-
-        const statusHandlers = {
-            processing: () => {
-                if (!socketRef.current?.isProcessingNotified) {
-                    notification.info(`图片处理中...`);
-                    if (socketRef.current) socketRef.current.isProcessingNotified = true;
-                }
-            },
-            completed: () => {
-                if (socketRef.current) socketRef.current.isProcessingNotified = false;
-                if (data.images?.length > 0) {
-                    if (updateContentDebounceRef.current) clearTimeout(updateContentDebounceRef.current);
-                    updateContentDebounceRef.current = setTimeout(() => processImagesUpdate(data.images), 500);
-                } else {
-                    notification.success('图片处理完成');
-                }
-            },
-            failed: () => {
-                if (socketRef.current) socketRef.current.isProcessingNotified = false;
-                notification.error(data.message || '图片处理失败');
-            },
-            delete_processing: () => notification.info(data.message || `正在删除图片...`),
-            delete_completed: () => notification.success(data.message || '图片已成功删除'),
-            delete_failed: () => notification.error(data.message || '删除图片时出现错误')
-        };
-
-        const handler = statusHandlers[data.status];
-        if (handler) handler();
-    }, [id, getDreamById, dream, setDream, processImagesUpdate]);
-
-    // 设置WebSocket连接
-    const setupWebSocketConnection = useCallback(() => {
-        if (!isAuthenticated || !id || socketRef.current) return;
-
-        const token = tokenManager.getAccessToken();
-        if (!token) return;
-
-        socketRef.current = new DreamImageWebSocketClient(id, token, handleImageUpdate);
-        socketRef.current.connect();
-    }, [id, isAuthenticated, handleImageUpdate]);
-
-    // 查找并设置梦境数据
-    const findDream = useCallback(() => {
-        const foundDream = getDreamById(id);
-        if (foundDream) {
-            setDream(foundDream);
-            setError(null);
-            setLoading(false);
-            if (isAuthenticated) setupWebSocketConnection();
-        } else {
-            setError("找不到该梦境记录");
-            setLoading(false);
-        }
-    }, [id, getDreamById, isAuthenticated, setupWebSocketConnection]);
-
-    // 组合多个useEffect，统一处理组件生命周期
     useEffect(() => {
-        if (authLoading) return;
+        fetchDreamDetail();
+    }, [id]);
 
-        // 认证检查
-        if (!isAuthenticated) {
-            navigate('/login', { state: { from: `/dreams/${id}` } });
-            return;
+    const fetchDreamDetail = async () => {
+        try {
+            const response = await api.get(`/dreams/${id}/`);
+            setDream(response.data);
+        } catch (error) {
+            notification.error('获取梦境详情失败');
+            navigate('/my-dreams');
+        } finally {
+            setLoading(false);
         }
+    };
 
-        // 加载梦境数据
-        if (dreams.length === 0 && !dreamsLoading) {
-            fetchDreams().then(findDream);
-        } else if (!dreamsLoading) {
-            findDream();
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await api.delete(`/dreams/${id}/`);
+            notification.success('梦境已删除');
+            navigate('/my-dreams');
+        } catch (error) {
+            notification.error('删除失败');
+            setIsDeleting(false);
         }
+    };
 
-        // 检查图片处理状态
-        if (dream && isAuthenticated && id) {
-            const needsImageProcessing = dream.images_status?.status === 'processing' ||
-                dream.content?.includes('![正在处理图片...]');
-            if (needsImageProcessing) setupWebSocketConnection();
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const formatDuration = (duration) => {
+        if (!duration) return '';
+        const parts = duration.split(':');
+        const hours = parseInt(parts[0]);
+        const minutes = parseInt(parts[1]);
+        if (hours > 0) {
+            return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}`;
         }
+        return `${minutes}分钟`;
+    };
 
-        // 清理函数
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.unmount();
-                socketRef.current = null;
-            }
-            if (updateContentDebounceRef.current) {
-                clearTimeout(updateContentDebounceRef.current);
-            }
-        };
-    }, [
-        id, authLoading, isAuthenticated, dreams, dreamsLoading,
-        navigate, fetchDreams, findDream, dream, setupWebSocketConnection
-    ]);
+    const renderSleepQualityStars = (quality) => {
+        return Array(5).fill(0).map((_, i) => (
+            <Star
+                key={i}
+                className={cn(
+                    "w-4 h-4",
+                    i < quality ? "text-yellow-400 fill-current" : "text-gray-400"
+                )}
+            />
+        ));
+    };
 
-    // 错误状态UI
-    if (error) {
+    if (loading) {
         return (
-            <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                        <Moon className="h-8 w-8 text-purple-400" />
-                        <h1 className="text-2xl font-bold text-purple-50">梦境详情</h1>
-                    </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center"
-                        onClick={() => navigate('/my-dreams')}
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        返回列表
-                    </Button>
-                </div>
-
-                <Alert variant="destructive" className="mb-6">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>获取梦境失败</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Button
-                        onClick={() => {
-                            setError(null);
-                            setLoading(true);
-                            fetchDreams().then(findDream);
-                        }}
-                    >
-                        重新获取数据
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    // 加载状态UI
-    if (loading || authLoading || dreamsLoading || !dream) {
-        return (
-            <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
-                <div className="flex items-center gap-3 mb-8">
-                    <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="dream-detail-container">
+                <div className="dream-detail-header">
+                    <Skeleton className="h-8 w-32" />
                     <Skeleton className="h-8 w-48" />
                 </div>
-
                 <Card className="dream-detail-card">
                     <CardHeader>
-                        <Skeleton className="h-8 w-3/4 mb-2" />
-                        <div className="flex gap-2 mb-2">
-                            <Skeleton className="h-5 w-20" />
-                            <Skeleton className="h-5 w-20" />
-                        </div>
-                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-8 w-3/4" />
+                        <Skeleton className="h-4 w-1/2 mt-2" />
                     </CardHeader>
                     <CardContent>
-                        {[...Array(3)].map((_, i) => (
-                            <Skeleton key={i} className="h-4 w-full mb-3" />
-                        ))}
-                        <Skeleton className="h-4 w-3/4 mb-6" />
-                        <Skeleton className="h-56 w-full mb-8 rounded-lg" />
-
-                        {[...Array(2)].map((_, i) => (
-                            <div key={i} className="mb-6">
-                                <Skeleton className="h-5 w-32 mb-2" />
-                                <div className="flex gap-2">
-                                    <Skeleton className="h-6 w-16" />
-                                    <Skeleton className="h-6 w-16" />
-                                </div>
-                            </div>
-                        ))}
+                        <Skeleton className="h-64 w-full" />
                     </CardContent>
                 </Card>
             </div>
         );
     }
 
-    // 正常渲染UI
+    if (!dream) {
+        return null;
+    }
+
+    const isAuthor = user && dream.author && user.id === dream.author.id;
+
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <Moon className="h-8 w-8 text-purple-400" />
-                    <h1 className="text-2xl font-bold text-purple-50">梦境详情</h1>
-                </div>
+        <div className="dream-detail-container">
+            {/* 头部导航 */}
+            <div className="dream-detail-header">
                 <Button
                     variant="ghost"
-                    size="sm"
-                    className="flex items-center hover:bg-gray-800/60"
-                    onClick={() => navigate('/my-dreams')}
+                    size="icon"
+                    onClick={() => navigate(-1)}
+                    className="back-button"
                 >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    返回列表
+                    <ArrowLeft className="h-5 w-5" />
                 </Button>
+                <h1 className="dream-detail-title">
+                    <Sparkles className="h-6 w-6" />
+                    梦境详情
+                </h1>
             </div>
 
-            <Card className="dream-detail-card mb-8">
-                <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-2xl font-bold text-purple-50 dream-title">{dream.title}</CardTitle>
-                        <div className="flex space-x-1">
-                            {CONFIG.tooltips.map(({ tip, icon }, i) => (
-                                <TooltipProvider key={i}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-800/60">
-                                                {icon}
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>{tip}</TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col space-y-3 mt-3">
-                        {/* 分类标签 */}
-                        {dream.categories?.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {dream.categories.map(category => (
-                                    <Badge
-                                        key={category.id || category.name}
-                                        className={`${CONFIG.categories[category.name] || 'bg-gray-500'} text-xs px-2 py-1 category-badge`}
-                                    >
-                                        {category.display_name}
-                                    </Badge>
-                                ))}
+            <div className="dream-detail-content">
+                {/* 主信息卡片 */}
+                <Card className="dream-main-card">
+                    <CardHeader className="dream-main-header">
+                        <div className="dream-title-section">
+                            <h2 className="dream-title">{dream.title}</h2>
+                            <div className="dream-meta-badges">
+                                <Badge variant="outline" className="meta-badge">
+                                    <Calendar className="h-3 w-3" />
+                                    {formatDate(dream.dream_date)}
+                                </Badge>
+                                <Badge variant="outline" className="meta-badge">
+                                    <User className="h-3 w-3" />
+                                    {dream.author?.username || '未知用户'}
+                                </Badge>
                             </div>
-                        )}
+                        </div>
 
-                        {/* 标签区域 */}
-                        {dream.tags && Object.entries(dream.tags).some(([_, tags]) => tags?.length > 0) && (
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {Object.entries(dream.tags).map(([type, tags]) =>
-                                    tags?.length > 0 && tags.map((tag, index) => (
-                                        <Badge
-                                            key={`${type}-${index}`}
+                        {isAuthor && (
+                            <div className="dream-actions">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => navigate(`/dreams/${id}/edit`)}
+                                    className="action-button"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button
                                             variant="outline"
-                                            className={`tag-badge ${CONFIG.tags[type]?.class}`}
+                                            size="icon"
+                                            className="action-button delete-button"
+                                            disabled={isDeleting}
                                         >
-                                            <span className="mr-1">{CONFIG.tags[type]?.icon}</span>
-                                            <span>{tag}</span>
-                                        </Badge>
-                                    ))
-                                )}
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>确认删除</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                确定要删除这个梦境记录吗？此操作无法撤销。
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>取消</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDelete}>
+                                                确认删除
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </div>
                         )}
+                    </CardHeader>
 
-                        {/* 日期和时间 */}
-                        <div className="flex items-center text-sm text-gray-400 mt-1 justify-between">
-                            <div className="flex items-center">
-                                <Calendar className="h-4 w-4 mr-1" />
-                                <span>{formatUtils.date(dream.created_at)}</span>
+                    <CardContent className="dream-main-content">
+                        {/* 分类和标签 */}
+                        <div className="tags-section">
+                            {dream.categories && dream.categories.length > 0 && (
+                                <div className="category-tags">
+                                    {dream.categories.map(category => {
+                                        // 处理分类对象，支持 name 属性和字符串格式
+                                        const categoryName = typeof category === 'object' ? category.name : category;
+                                        const config = CATEGORY_CONFIG[categoryName] || { label: categoryName, color: '#6b7280' };
+                                        return (
+                                            <Badge
+                                                key={typeof category === 'object' ? category.id : category}
+                                                className="category-badge"
+                                                style={{
+                                                    backgroundColor: config.color + '20',
+                                                    borderColor: config.color,
+                                                    color: config.color
+                                                }}
+                                            >
+                                                <Tag className="h-3 w-3" />
+                                                {config.label}
+                                            </Badge>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {dream.tags && dream.tags.length > 0 && (
+                                <div className="dream-tags">
+                                    <Hash className="h-4 w-4 text-muted-foreground" />
+                                    {dream.tags.map(tag => (
+                                        <Badge key={tag.id} variant="secondary" className="tag-badge">
+                                            {tag.name}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <Separator className="my-4" />
+
+                        {/* 快速指标 */}
+                        <div className="metrics-grid">
+                            {/* 情绪指标 */}
+                            <div className="metric-card">
+                                <div className="metric-header">
+                                    <Heart className="h-4 w-4" />
+                                    <span>情绪状态</span>
+                                </div>
+                                <div className="emotion-display">
+                                    {dream.mood_before_sleep && (
+                                        <div className="emotion-item">
+                                            <span className="emotion-icon">
+                                                {MOOD_CONFIG[dream.mood_before_sleep]?.icon}
+                                            </span>
+                                            <span className="emotion-label">睡前</span>
+                                        </div>
+                                    )}
+                                    {dream.mood_in_dream && (
+                                        <div className="emotion-item">
+                                            <span className="emotion-icon">
+                                                {MOOD_CONFIG[dream.mood_in_dream]?.icon}
+                                            </span>
+                                            <span className="emotion-label">梦中</span>
+                                        </div>
+                                    )}
+                                    {dream.mood_after_waking && (
+                                        <div className="emotion-item">
+                                            <span className="emotion-icon">
+                                                {MOOD_CONFIG[dream.mood_after_waking]?.icon}
+                                            </span>
+                                            <span className="emotion-label">醒后</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1" />
-                                <span>{formatUtils.time(dream.created_at)}</span>
+
+                            {/* 睡眠质量 */}
+                            {dream.sleep_quality && (
+                                <div className="metric-card">
+                                    <div className="metric-header">
+                                        <Bed className="h-4 w-4" />
+                                        <span>睡眠质量</span>
+                                    </div>
+                                    <div className="sleep-quality-display">
+                                        {renderSleepQualityStars(dream.sleep_quality)}
+                                        <span className="quality-text">
+                                            {SLEEP_QUALITY_CONFIG[dream.sleep_quality]?.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 清醒度 */}
+                            <div className="metric-card">
+                                <div className="metric-header">
+                                    <Zap className="h-4 w-4" />
+                                    <span>清醒度</span>
+                                </div>
+                                <div className="lucidity-display">
+                                    <div className="lucidity-bar">
+                                        <div
+                                            className="lucidity-fill"
+                                            style={{ width: `${(dream.lucidity_level / 5) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="lucidity-value">{dream.lucidity_level}/5</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </CardHeader>
 
-                <CardContent className="space-y-6 pt-0">
-                    {/* 梦境内容分割线 */}
-                    <div className="border-t border-gray-800/70 my-3"></div>
+                        <Separator className="my-6" />
 
-                    {/* 梦境内容 */}
-                    <div className="dream-content-container">
-                        <div className="dream-body relative">
-                            <MarkdownRenderer content={dream.content} />
-                        </div>
-                    </div>
+                        {/* 选项卡内容 */}
+                        <Tabs defaultValue="content" className="dream-tabs">
+                            <TabsList className="tabs-list">
+                                <TabsTrigger value="content">梦境内容</TabsTrigger>
+                                <TabsTrigger value="analysis">分析解读</TabsTrigger>
+                                <TabsTrigger value="details">详细信息</TabsTrigger>
+                            </TabsList>
 
-                    {/* 解梦提示 */}
-                    <div className="bg-purple-900/20 border border-purple-700/30 p-4 rounded-lg mt-6 dream-interpretation">
-                        <div className="flex items-center mb-2">
-                            <HelpCircle className="h-5 w-5 text-purple-400 mr-2" />
-                            <h3 className="text-md font-medium text-purple-300">解梦提示</h3>
-                        </div>
-                        <p className="text-sm text-gray-300">
-                            这个梦境可能反映了你的潜意识中的情感和经历。关注梦中的象征物和情感，它们可能与你当前生活中的某些方面有关联。
-                        </p>
-                    </div>
-                </CardContent>
+                            <TabsContent value="content" className="tab-content">
+                                <div className="content-section">
+                                    <div className={cn(
+                                        "rich-text-content",
+                                        !showFullContent && dream.content && dream.content.length > 800 ? "content-preview" : ""
+                                    )}>
+                                        <div dangerouslySetInnerHTML={{ __html: dream.content }} />
+                                    </div>
 
-                <CardFooter className="flex justify-between items-center pt-4 border-t border-gray-800">
-                    <div className="flex items-center">
-                        <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage src="/assets/user-avatar.png" alt="用户头像" />
-                            <AvatarFallback>用户</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="text-sm font-medium text-gray-300">我的梦境记录</p>
-                            <p className="text-xs text-gray-500">私密记录 · 仅自己可见</p>
-                        </div>
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs border-gray-700 hover:bg-gray-800"
-                        onClick={() => navigate(`/edit-dream/${dream.id}`)}
-                    >
-                        编辑梦境
-                    </Button>
-                </CardFooter>
-            </Card>
+                                    {dream.content && dream.content.length > 800 && (
+                                        <button
+                                            onClick={() => setShowFullContent(!showFullContent)}
+                                            className="show-more-btn"
+                                        >
+                                            {showFullContent ? (
+                                                <>
+                                                    收起内容 <ChevronUp className="h-4 w-4" />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    展开全文 <ChevronDown className="h-4 w-4" />
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="analysis" className="tab-content">
+                                <div className="analysis-section">
+                                    {dream.interpretation && (
+                                        <div className="interpretation-card">
+                                            <div className="card-header">
+                                                <Brain className="h-5 w-5" />
+                                                <h3>梦境解析</h3>
+                                            </div>
+                                            <div className="card-content">
+                                                {dream.interpretation}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {dream.personal_notes && (
+                                        <div className="notes-card">
+                                            <div className="card-header">
+                                                <BookOpen className="h-5 w-5" />
+                                                <h3>个人笔记</h3>
+                                            </div>
+                                            <div className="card-content">
+                                                {dream.personal_notes}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!dream.interpretation && !dream.personal_notes && (
+                                        <div className="empty-state">
+                                            <Brain className="h-12 w-12 text-muted-foreground" />
+                                            <p>暂无分析内容</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="details" className="tab-content">
+                                <div className="details-section">
+                                    {/* 睡眠时间 */}
+                                    {(dream.bedtime || dream.wake_time || dream.sleep_duration) && (
+                                        <div className="detail-group">
+                                            <h3 className="group-title">
+                                                <Clock className="h-4 w-4" />
+                                                睡眠时间
+                                            </h3>
+                                            <div className="detail-items">
+                                                {dream.bedtime && (
+                                                    <div className="detail-item">
+                                                        <Bed className="h-4 w-4" />
+                                                        <span>就寝: {dream.bedtime}</span>
+                                                    </div>
+                                                )}
+                                                {dream.wake_time && (
+                                                    <div className="detail-item">
+                                                        <Sun className="h-4 w-4" />
+                                                        <span>醒来: {dream.wake_time}</span>
+                                                    </div>
+                                                )}
+                                                {dream.sleep_duration && (
+                                                    <div className="detail-item">
+                                                        <Clock className="h-4 w-4" />
+                                                        <span>时长: {formatDuration(dream.sleep_duration)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 重复梦境 */}
+                                    {dream.is_recurring && (
+                                        <div className="detail-group">
+                                            <h3 className="group-title">
+                                                <Repeat className="h-4 w-4" />
+                                                重复梦境
+                                            </h3>
+                                            <div className="recurring-badge">
+                                                <Repeat className="w-4 h-4" />
+                                                <span>这是一个重复出现的梦境</span>
+                                            </div>
+                                            {dream.recurring_elements && (
+                                                <div className="recurring-elements">
+                                                    <h4>重复元素:</h4>
+                                                    <p>{dream.recurring_elements}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* 隐私设置 */}
+                                    <div className="detail-group">
+                                        <h3 className="group-title">
+                                            <Shield className="h-4 w-4" />
+                                            隐私设置
+                                        </h3>
+                                        <div className="privacy-display">
+                                            {React.createElement(PRIVACY_CONFIG[dream.privacy]?.icon, { className: 'w-4 h-4' })}
+                                            <span>{PRIVACY_CONFIG[dream.privacy]?.label}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* 时间戳 */}
+                                    <div className="timestamps">
+                                        <span>创建于 {new Date(dream.created_at).toLocaleString('zh-CN')}</span>
+                                        {dream.updated_at !== dream.created_at && (
+                                            <span>更新于 {new Date(dream.updated_at).toLocaleString('zh-CN')}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };

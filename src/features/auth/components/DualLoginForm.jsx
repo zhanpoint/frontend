@@ -9,11 +9,8 @@ import { Label } from "@/components/ui/label.jsx";
 import { Eye, EyeOff, User, Lock, Phone, Mail, Shield, Sparkles, Star } from "lucide-react";
 import { smsService } from "@/services/notification/sms";
 import { emailService } from "@/services/notification/email";
-import emailAuth from "@/services/auth/emailAuth";
 import notification from "@/utils/notification";
-import smsAuth from "@/services/auth/smsAuth";
 import { isFeatureEnabled, getAvailableLoginMethods } from "@/config/features";
-import { tokenManager } from "@/services/auth/tokenManager";
 import "./css/DreamTheme.css";
 
 /**
@@ -121,12 +118,10 @@ export function DualLoginForm() {
 
         if (!passwordForm.username.trim()) {
             newErrors.username = "请输入用户名";
-        } else if (passwordForm.username.length < 4) {
-            newErrors.username = "用户名长度至少为4个字符";
-        } else if (passwordForm.username.length > 16) {
-            newErrors.username = "用户名长度不能超过16个字符";
-        } else if (!/^[a-zA-Z0-9]{4,16}$/.test(passwordForm.username)) {
-            newErrors.username = "用户名只能包含字母、数字，长度为4-16个字符";
+        } else if (passwordForm.username.length < 3) {
+            newErrors.username = "用户名长度至少为3个字符";
+        } else if (passwordForm.username.length > 20) {
+            newErrors.username = "用户名长度不能超过20个字符";
         }
 
         if (!passwordForm.password) {
@@ -135,8 +130,6 @@ export function DualLoginForm() {
             newErrors.password = "密码长度至少为8个字符";
         } else if (passwordForm.password.length > 32) {
             newErrors.password = "密码长度不能超过32个字符";
-        } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,32}$/.test(passwordForm.password)) {
-            newErrors.password = "密码至少包含一个大写字母、一个小写字母和一个数字";
         }
 
         setErrors(newErrors);
@@ -195,25 +188,17 @@ export function DualLoginForm() {
         }
 
         try {
-            // 开始加载状态
             setIsLoading(true);
-
-            // 使用smsService发送验证码，指定登录场景
             const response = await smsService.sendVerificationCode(smsForm.phone, 'login');
 
-            // 成功情况
             if (response.data.code === 200) {
                 notification.success(response.data.message || "验证码发送成功，请查收短信");
-
-                // 开始倒计时
                 setSmsCountdown(60);
                 setErrors(prev => ({ ...prev, phone: "" }));
             } else {
                 notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
         } catch (error) {
-            console.error("发送验证码失败:", error);
-
             const errorMessage = error.response?.data?.message || "发送验证码失败，请稍后再试";
             notification.error(errorMessage);
 
@@ -239,25 +224,17 @@ export function DualLoginForm() {
         }
 
         try {
-            // 开始加载状态
             setIsLoading(true);
-
-            // 使用emailService发送验证码，指定登录场景
             const response = await emailService.sendVerificationCode(emailForm.email, 'login');
 
-            // 成功情况
             if (response.data.code === 200) {
                 notification.success(response.data.message || "验证码发送成功，请查收邮箱");
-
-                // 开始倒计时
                 setEmailCountdown(60);
                 setErrors(prev => ({ ...prev, email: "" }));
             } else {
                 notification.warning(response.data.message || "验证码发送可能失败，请稍后再试");
             }
         } catch (error) {
-            console.error("发送邮箱验证码失败:", error);
-
             const errorMessage = error.response?.data?.message || "发送验证码失败，请稍后再试";
             notification.error(errorMessage);
 
@@ -322,7 +299,6 @@ export function DualLoginForm() {
                 }
             }
         } catch (error) {
-            console.error(`${loginType}登录失败:`, error);
             setErrors({ general: "登录失败，请重试" });
         } finally {
             setIsLoading(false);
@@ -470,19 +446,18 @@ export function DualLoginForm() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="sms_verificationCode">验证码</Label>
+                                    <Label htmlFor="verificationCode">验证码</Label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
                                             <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                id="sms_verificationCode"
+                                                id="verificationCode"
                                                 name="verificationCode"
                                                 type="text"
-                                                placeholder="请输入6位验证码"
+                                                placeholder="请输入验证码"
                                                 value={smsForm.verificationCode}
                                                 onChange={handleSmsFormChange}
                                                 className={`pl-10 input ${errors.verificationCode ? 'error-input' : ''}`}
-                                                maxLength={6}
                                             />
                                         </div>
                                         <Button
@@ -490,9 +465,9 @@ export function DualLoginForm() {
                                             variant="outline"
                                             onClick={handleSendSmsVerificationCode}
                                             disabled={smsCountdown > 0 || isLoading}
-                                            className="verification-button"
+                                            className="whitespace-nowrap"
                                         >
-                                            {smsCountdown > 0 ? `${smsCountdown}s` : "发送验证码"}
+                                            {smsCountdown > 0 ? `${smsCountdown}s` : "获取验证码"}
                                         </Button>
                                     </div>
                                     {errors.verificationCode && (
@@ -537,19 +512,18 @@ export function DualLoginForm() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="email_verificationCode">验证码</Label>
+                                    <Label htmlFor="emailVerificationCode">验证码</Label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
                                             <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                id="email_verificationCode"
+                                                id="emailVerificationCode"
                                                 name="verificationCode"
                                                 type="text"
-                                                placeholder="请输入6位验证码"
+                                                placeholder="请输入验证码"
                                                 value={emailForm.verificationCode}
                                                 onChange={handleEmailFormChange}
                                                 className={`pl-10 input ${errors.verificationCode ? 'error-input' : ''}`}
-                                                maxLength={6}
                                             />
                                         </div>
                                         <Button
@@ -557,9 +531,9 @@ export function DualLoginForm() {
                                             variant="outline"
                                             onClick={handleSendEmailVerificationCode}
                                             disabled={emailCountdown > 0 || isLoading}
-                                            className="verification-button"
+                                            className="whitespace-nowrap"
                                         >
-                                            {emailCountdown > 0 ? `${emailCountdown}s` : "发送验证码"}
+                                            {emailCountdown > 0 ? `${emailCountdown}s` : "获取验证码"}
                                         </Button>
                                     </div>
                                     {errors.verificationCode && (

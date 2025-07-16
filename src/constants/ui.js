@@ -13,36 +13,6 @@ export const COLORS = {
     INFO: '#06b6d4',
 };
 
-// 梦境分类颜色映射
-export const DREAM_CATEGORY_COLORS = {
-    normal: 'bg-gray-500',
-    memorable: 'bg-blue-500',
-    indicate: 'bg-cyan-500',
-    archetypal: 'bg-purple-500',
-    lucid: 'bg-green-500',
-    nightmare: 'bg-red-500',
-    repeating: 'bg-yellow-500',
-    sleep_paralysis: 'bg-indigo-500',
-};
-
-// 标签类型配置
-export const TAG_TYPES = {
-    theme: {
-        icon: 'Palette',
-        class: 'dream-tag-theme',
-        color: 'rgba(139, 92, 246, 0.8)',
-    },
-    character: {
-        icon: 'Users',
-        class: 'dream-tag-character',
-        color: 'rgba(6, 182, 212, 0.8)',
-    },
-    location: {
-        icon: 'MapPin',
-        class: 'dream-tag-location',
-        color: 'rgba(234, 179, 8, 0.8)',
-    },
-};
 
 // 响应断点
 export const BREAKPOINTS = {
@@ -133,8 +103,6 @@ export const ICON_SIZES = {
 // 默认导出
 export default {
     COLORS,
-    DREAM_CATEGORY_COLORS,
-    TAG_TYPES,
     BREAKPOINTS,
     ANIMATION_DURATIONS,
     Z_INDEX,

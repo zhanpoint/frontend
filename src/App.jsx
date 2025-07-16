@@ -1,8 +1,8 @@
 import { Outlet } from "react-router-dom";
 import { Navbar } from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
-import { DreamsProvider } from "./contexts/DreamsContext";
-import DreamAIAgent from "./features/dreams/components/DreamAIAgent";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { useEffect } from "react";
 import { fetchFeatureFlags } from "./config/features";
 
@@ -13,15 +13,17 @@ function App() {
     }, []);
 
     return (
-        <AuthProvider>
-            <DreamsProvider>
+        <ThemeProvider>
+            <AuthProvider>
                 <div className="home-container">
                     <Navbar />
-                    <Outlet />
-                    <DreamAIAgent />
+                    <main className="main-content">
+                        <Outlet />
+                    </main>
+                    <Footer />
                 </div>
-            </DreamsProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 

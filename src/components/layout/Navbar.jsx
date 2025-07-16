@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, User, Menu, Book, Compass, Users, Moon } from "lucide-react";
+import { Book, Compass, Users, Moon } from "lucide-react";
 import "./Navbar.css";
 import { useAuth } from "@/hooks/useAuth";
 import UserAvatar from "@/components/user/UserAvatar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 import {
     NavigationMenu,
@@ -13,21 +14,7 @@ import {
     NavigationMenuList,
     NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu.jsx";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet.jsx";
 import { Button } from "@/components/ui/button.jsx";
-import { Input } from "@/components/ui/input.jsx";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion.jsx";
 
 
 // 定义导航栏属性接口
@@ -105,7 +92,6 @@ const Navbar = ({
         },
     ],
 }) => {
-    const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
     const { isAuthenticated, isLoading } = useAuth();
 
@@ -157,51 +143,7 @@ const Navbar = ({
         );
     };
 
-    // 渲染移动端菜单项
-    const renderMobileMenuItem = (item) => {
-        if (item.items) {
-            return (
-                <AccordionItem key={item.title} value={item.title} className="border-b-0">
-                    <AccordionTrigger className="mobile-nav-item">
-                        <div className="flex items-center gap-2">
-                            {item.icon}
-                            {item.title}
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="mt-2 space-y-2">
-                        {item.items.map((subItem) => (
-                            <a
-                                key={subItem.title}
-                                className="nav-menu-item"
-                                href={subItem.url}
-                            >
-                                {subItem.icon}
-                                <div>
-                                    <div className="nav-menu-item-title">{subItem.title}</div>
-                                    {subItem.description && (
-                                        <p className="nav-menu-item-desc">
-                                            {subItem.description}
-                                        </p>
-                                    )}
-                                </div>
-                            </a>
-                        ))}
-                    </AccordionContent>
-                </AccordionItem>
-            );
-        }
 
-        return (
-            <a
-                key={item.title}
-                href={item.url}
-                className="mobile-nav-item"
-            >
-                {item.icon}
-                {item.title}
-            </a>
-        );
-    };
 
     // 在用户登录时增加"我的梦境"选项
     const MyDreamsButton = () => {
@@ -214,7 +156,6 @@ const Navbar = ({
                 className="my-dreams-btn"
                 onClick={() => navigate('/my-dreams')}
             >
-                <Moon className="h-4 w-4" />
                 我的梦境
             </Button>
         );
@@ -242,29 +183,20 @@ const Navbar = ({
                     </NavigationMenu>
                 </div>
 
-                {/* 搜索框和用户菜单 */}
+                {/* 用户工具栏 */}
                 <div className="navbar-tools">
-                    {/* 搜索框 */}
-                    <div className="search-container">
-                        <Search className="search-icon" />
-                        <Input
-                            type="search"
-                            placeholder="搜索..."
-                            className="search-input"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
+                    {/* 主题切换按钮 */}
+                    <ThemeToggle />
 
                     {/* 用户菜单 */}
                     {!isLoading && (
                         isAuthenticated ? (
-                            <div className="flex items-center gap-4">
+                            <div className="user-actions">
                                 <MyDreamsButton />
                                 <Button
                                     size="sm"
-                                    className="create-post-btn"
-                                    onClick={() => navigate('/create-post')}
+                                    className="create-dream-btn"
+                                    onClick={() => navigate('/dreams/create')}
                                 >
                                     创建梦境
                                 </Button>
@@ -291,82 +223,7 @@ const Navbar = ({
                         )
                     )}
 
-                    {/* 移动端菜单 */}
-                    <div className="mobile-menu">
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="outline" size="icon">
-                                    <Menu className="h-5 w-5" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="right" className="mobile-menu-content">
-                                <SheetHeader>
-                                    <SheetTitle>
-                                        <a href={logo.url} className="flex items-center gap-2">
-                                            <img src={logo.src} className="h-8 w-8" alt={logo.alt} />
-                                            <span className="navbar-logo-text">
-                                                {logo.title}
-                                            </span>
-                                        </a>
-                                    </SheetTitle>
-                                </SheetHeader>
 
-                                <div className="my-6 flex flex-col gap-6">
-                                    {/* 移动端搜索框 */}
-                                    <div className="mobile-search">
-                                        <Search className="search-icon" />
-                                        <Input
-                                            type="search"
-                                            placeholder="搜索..."
-                                            className="search-input"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                    </div>
-
-                                    {/* 移动端导航 */}
-                                    <Accordion
-                                        type="single"
-                                        collapsible
-                                        className="flex w-full flex-col gap-4"
-                                    >
-                                        {menu.map((item) => renderMobileMenuItem(item))}
-                                    </Accordion>
-
-                                    {/* 移动端用户操作 */}
-                                    {!isLoading && (
-                                        <div className="mobile-buttons">
-                                            {isAuthenticated && <MyDreamsButton />}
-                                            {!isAuthenticated && (
-                                                <>
-                                                    <Button
-                                                        variant="ghost"
-                                                        className="login-btn"
-                                                        onClick={() => navigate('/login')}
-                                                    >
-                                                        登录
-                                                    </Button>
-                                                    <Button
-                                                        className="register-btn"
-                                                        onClick={() => navigate('/register')}
-                                                    >
-                                                        注册
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* 移动端用户头像 */}
-                                    {!isLoading && isAuthenticated && (
-                                        <div className="flex justify-center py-4">
-                                            <UserAvatar />
-                                        </div>
-                                    )}
-                                </div>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
                 </div>
             </div>
         </header>

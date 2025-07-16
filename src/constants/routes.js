@@ -15,13 +15,6 @@ export const ROUTES = {
     FORGOT_PASSWORD: '/forgot-password',
     RESET_PASSWORD: '/reset-password',
 
-    // 梦境相关路由
-    MY_DREAMS: '/my-dreams',
-    CREATE_POST: '/create-post',
-    CREATE_DREAM: '/create-dream',
-    DREAM_DETAIL: '/dreams/:id',
-    EDIT_DREAM: '/edit-dream/:dreamId',
-
     // 用户相关路由
     PROFILE: '/profile',
     SETTINGS: '/settings',

@@ -4,10 +4,10 @@ import App from "./App";
 import Register from "./pages/RegisterPage";
 import { LoginPage } from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import CreatePost from "./pages/CreatePost";
 import HomePage from "./pages/HomePage";
-import MyDreams from "./pages/MyDreams";
+import CreateDream from "./pages/CreateDream";
 import DreamDetail from "./pages/DreamDetail";
+import MyDreams from "./pages/MyDreams";
 import EditDream from "./pages/EditDream";
 import PrivateRoute from "./features/auth/components/PrivateRoute";
 
@@ -24,10 +24,10 @@ const router = createBrowserRouter([
                 element: <HomePage />,
             },
             {
-                path: "create-post",
+                path: "dreams/create",
                 element: (
                     <PrivateRoute>
-                        <CreatePost />
+                        <CreateDream />
                     </PrivateRoute>
                 ),
             },
@@ -48,7 +48,7 @@ const router = createBrowserRouter([
                 ),
             },
             {
-                path: "edit-dream/:dreamId",
+                path: "dreams/:id/edit",
                 element: (
                     <PrivateRoute>
                         <EditDream />

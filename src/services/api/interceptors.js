@@ -74,7 +74,6 @@ export const setupRequestInterceptor = (apiClient) => {
                     // 处理排队的请求
                     processQueue(null, newToken, apiClient);
 
-                    console.log('令牌主动刷新成功');
                 } catch (error) {
                     // 刷新失败
                     processQueue(error, null, apiClient);
