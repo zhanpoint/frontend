@@ -25,7 +25,6 @@ export const auth = {
     // 用户资料管理
     updateUserProfile: (userData) => profileManager.updateUserProfile(userData),
     getUserProfile: () => profileManager.getUserProfile(),
-    uploadAvatar: (file) => profileManager.uploadAvatar(file),
 };
 
 // 默认导出

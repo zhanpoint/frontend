@@ -13,34 +13,6 @@ export const smsService = {
      */
     sendVerificationCode: async (phone, scene = 'register') => {
         return api.post('/verifications/sms/', { phone, scene });
-    },
-
-    /**
-     * 发送通知短信
-     * @param {string} phone - 手机号
-     * @param {string} templateId - 模板ID
-     * @param {Object} params - 模板参数
-     * @returns {Promise} - API响应
-     */
-    sendNotification: (phone, templateId, params = {}) => {
-        return api.post('/sms/send-notification/', {
-            phone,
-            template_id: templateId,
-            params
-        });
-    },
-
-    /**
-     * 发送营销短信
-     * @param {string} phone - 手机号
-     * @param {string} content - 短信内容
-     * @returns {Promise} - API响应
-     */
-    sendMarketing: (phone, content) => {
-        return api.post('/sms/send-marketing/', {
-            phone,
-            content
-        });
     }
 };
 
