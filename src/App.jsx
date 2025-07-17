@@ -4,12 +4,12 @@ import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useEffect } from "react";
-import { fetchFeatureFlags } from "./config/features";
+import { initializeFeatureFlags } from "./config/features";
 
 function App() {
-    // 初始化功能开关配置
+    // 在应用加载时初始化功能开关
     useEffect(() => {
-        fetchFeatureFlags().catch(console.error);
+        initializeFeatureFlags();
     }, []);
 
     return (

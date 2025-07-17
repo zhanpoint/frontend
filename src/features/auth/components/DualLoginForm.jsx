@@ -331,23 +331,40 @@ export function DualLoginForm() {
             </CardHeader>
             <CardContent>
                 <Tabs value={loginMode} onValueChange={setLoginMode} className="w-full">
-                    <TabsList className={`grid w-full tabs-list ${availableLoginMethods.length === 1 ? 'grid-cols-1' :
-                        availableLoginMethods.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
-                        }`}>
+                    <TabsList
+                        className="w-full tabs-list"
+                        style={{
+                            display: 'flex',
+                            gap: '4px',
+                            gridTemplateColumns: 'none' // 覆盖任何grid样式
+                        }}
+                    >
                         {isFeatureEnabled('PASSWORD_LOGIN_ENABLED') && (
-                            <TabsTrigger value="password" className="flex items-center gap-2">
+                            <TabsTrigger
+                                value="password"
+                                className="flex items-center gap-2"
+                                style={{ flex: 1, minWidth: 0 }}
+                            >
                                 <Lock className="w-4 h-4" />
                                 账号密码
                             </TabsTrigger>
                         )}
                         {isFeatureEnabled('SMS_SERVICE_ENABLED') && (
-                            <TabsTrigger value="sms" className="flex items-center gap-2">
+                            <TabsTrigger
+                                value="sms"
+                                className="flex items-center gap-2"
+                                style={{ flex: 1, minWidth: 0 }}
+                            >
                                 <Phone className="w-4 h-4" />
                                 手机验证
                             </TabsTrigger>
                         )}
                         {isFeatureEnabled('EMAIL_SERVICE_ENABLED') && (
-                            <TabsTrigger value="email" className="flex items-center gap-2">
+                            <TabsTrigger
+                                value="email"
+                                className="flex items-center gap-2"
+                                style={{ flex: 1, minWidth: 0 }}
+                            >
                                 <Mail className="w-4 h-4" />
                                 邮箱验证
                             </TabsTrigger>

@@ -13,7 +13,7 @@ export function ResetPasswordPage() {
             {/* 简化版导航栏，包含返回按钮和品牌logo */}
             <header className="auth-header">
                 <div className="auth-header-container">
-                    <Link to="/login" className="auth-back-button">
+                    <Link to="/login" className="auth-back-button dream-link">
                         <ArrowLeft />
                         返回登录
                     </Link>

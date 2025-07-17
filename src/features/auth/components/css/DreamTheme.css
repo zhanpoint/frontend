@@ -50,7 +50,7 @@
     transition: color 0.3s ease;
 }
 
-/* Tab列表样式 */
+/* Tab列表样式 - 简化版本，布局通过内联样式处理 */
 .tabs-list {
     background: hsl(var(--muted) / 0.5);
     border: 1px solid hsl(var(--border));
@@ -60,7 +60,7 @@
     transition: all 0.3s ease;
 }
 
-/* Tab触发器样式 */
+/* Tab触发器视觉样式 */
 .tabs-list [data-state="active"] {
     background: linear-gradient(135deg, hsl(var(--dream-primary)), hsl(var(--dream-secondary)));
     color: white;

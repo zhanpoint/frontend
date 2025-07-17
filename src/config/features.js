@@ -1,120 +1,90 @@
 /**
  * 前端功能开关配置
- * 用于控制各种功能的启用/禁用状态
+ * 采用应用启动时初始化，后续同步获取的模式
+ * 初始化过程是幂等的，可防止在React.StrictMode中重复请求
  */
 
 // 默认的功能开关配置（后备配置）
 const DEFAULT_FEATURE_FLAGS = {
-    // 短信服务开关 - 控制短信登录、注册、重置密码功能
-    SMS_SERVICE_ENABLED: false,
-
-    // 邮件服务开关 - 控制邮箱登录、注册、重置密码功能
+    SMS_SERVICE_ENABLED: true,
     EMAIL_SERVICE_ENABLED: true,
-
-    // 密码登录开关
     PASSWORD_LOGIN_ENABLED: true,
 };
 
-// 运行时功能开关配置（从后端获取）
-let RUNTIME_FEATURE_FLAGS = { ...DEFAULT_FEATURE_FLAGS };
+// 运行时功能开关配置
+let featureFlags = { ...DEFAULT_FEATURE_FLAGS };
+
+// 用于确保初始化只执行一次的Promise
+let initializePromise = null;
 
 /**
- * 从后端获取功能开关配置
- * @returns {Promise<Object>} - 功能开关配置
+ * 初始化功能开关（幂等）
+ * 在应用启动时调用，即使多次调用也只会发起一次网络请求
  */
-export const fetchFeatureFlags = async () => {
-    try {
-        const response = await fetch('/api/system/features/');
-        if (response.ok) {
-            const result = await response.json();
-            if (result.code === 200 && result.data) {
-                RUNTIME_FEATURE_FLAGS = { ...DEFAULT_FEATURE_FLAGS, ...result.data };
-                return RUNTIME_FEATURE_FLAGS;
-            }
-        }
-    } catch (error) {
-        console.warn('获取功能开关配置失败，使用默认配置:', error);
+export const initializeFeatureFlags = () => {
+    if (!initializePromise) {
+        initializePromise = fetch('/api/system/features/')
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('网络响应错误');
+            })
+            .then(result => {
+                if (result.code === 200 && result.data) {
+                    featureFlags = { ...DEFAULT_FEATURE_FLAGS, ...result.data };
+                } else {
+                    throw new Error('API返回数据格式错误');
+                }
+            })
+            .catch(error => {
+                console.warn(`无法从后端获取功能开关，将使用默认配置: ${error.message}`);
+                // 如果获取失败，则使用默认配置
+                featureFlags = { ...DEFAULT_FEATURE_FLAGS };
+            });
     }
-
-    // 获取失败时使用默认配置
-    RUNTIME_FEATURE_FLAGS = { ...DEFAULT_FEATURE_FLAGS };
-    return RUNTIME_FEATURE_FLAGS;
+    return initializePromise;
 };
 
 /**
- * 获取当前功能开关配置
- * @returns {Object} - 当前功能开关配置
- */
-export const getFeatureFlags = () => {
-    return RUNTIME_FEATURE_FLAGS;
-};
-
-/**
- * 检查功能是否启用
+ * 检查功能是否启用（同步）
  * @param {string} feature - 功能名称
  * @returns {boolean} - 是否启用
  */
 export const isFeatureEnabled = (feature) => {
-    return RUNTIME_FEATURE_FLAGS[feature] || false;
+    return !!featureFlags[feature];
 };
 
 /**
- * 获取可用的登录方式
+ * 获取可用的登录方式（同步）
  * @returns {Array} - 可用的登录方式列表
  */
 export const getAvailableLoginMethods = () => {
     const methods = [];
-
-    if (isFeatureEnabled('PASSWORD_LOGIN_ENABLED')) {
-        methods.push('password');
-    }
-
-    if (isFeatureEnabled('SMS_SERVICE_ENABLED')) {
-        methods.push('sms');
-    }
-
-    if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) {
-        methods.push('email');
-    }
-
+    if (isFeatureEnabled('PASSWORD_LOGIN_ENABLED')) methods.push('password');
+    if (isFeatureEnabled('SMS_SERVICE_ENABLED')) methods.push('sms');
+    if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) methods.push('email');
     return methods;
 };
 
 /**
- * 获取可用的注册方式
+ * 获取可用的注册方式（同步）
  * @returns {Array} - 可用的注册方式列表
  */
 export const getAvailableRegisterMethods = () => {
     const methods = [];
-
-    if (isFeatureEnabled('SMS_SERVICE_ENABLED')) {
-        methods.push('phone');
-    }
-
-    if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) {
-        methods.push('email');
-    }
-
+    if (isFeatureEnabled('SMS_SERVICE_ENABLED')) methods.push('phone');
+    if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) methods.push('email');
     return methods;
 };
 
 /**
- * 获取可用的密码重置方式
+ * 获取可用的密码重置方式（同步）
  * @returns {Array} - 可用的密码重置方式列表
  */
 export const getAvailableResetMethods = () => {
     const methods = [];
-
-    if (isFeatureEnabled('SMS_SERVICE_ENABLED')) {
-        methods.push('phone');
-    }
-
-    if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) {
-        methods.push('email');
-    }
-
+    if (isFeatureEnabled('SMS_SERVICE_ENABLED')) methods.push('phone');
+    if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) methods.push('email');
     return methods;
-};
-
-// 初始化时获取配置
-fetchFeatureFlags(); 
+}; 

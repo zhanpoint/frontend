@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Phone, Mail, Shield } from "lucide-react";
+import { Eye, EyeOff, Lock, Phone, Mail, Shield, Star } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -318,15 +318,30 @@ export function ResetPasswordForm() {
             </CardHeader>
             <CardContent>
                 <Tabs value={resetMode} onValueChange={setResetMode} className="w-full">
-                    <TabsList className={`grid w-full tabs-list ${availableResetMethods.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    <TabsList
+                        className="w-full tabs-list"
+                        style={{
+                            display: 'flex',
+                            gap: '4px',
+                            gridTemplateColumns: 'none'
+                        }}
+                    >
                         {isFeatureEnabled('SMS_SERVICE_ENABLED') && (
-                            <TabsTrigger value="phone" className="flex items-center gap-2">
+                            <TabsTrigger
+                                value="phone"
+                                className="flex items-center gap-2"
+                                style={{ flex: 1, minWidth: 0 }}
+                            >
                                 <Phone className="w-4 h-4" />
                                 手机重置
                             </TabsTrigger>
                         )}
                         {isFeatureEnabled('EMAIL_SERVICE_ENABLED') && (
-                            <TabsTrigger value="email" className="flex items-center gap-2">
+                            <TabsTrigger
+                                value="email"
+                                className="flex items-center gap-2"
+                                style={{ flex: 1, minWidth: 0 }}
+                            >
                                 <Mail className="w-4 h-4" />
                                 邮箱重置
                             </TabsTrigger>
@@ -559,11 +574,16 @@ export function ResetPasswordForm() {
                 </Tabs>
             </CardContent>
             <CardFooter>
-                <div className="text-center w-full">
+                <div className="text-center w-full login-link">
                     <span className="text-sm text-muted-foreground">想起密码了？</span>
-                    <Button variant="link" onClick={handleGoToLogin} className="text-primary p-0 ml-1">
+                    <a
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); handleGoToLogin(); }}
+                        className="dream-link ml-1"
+                    >
+                        <Star className="w-3 h-3 inline mr-1" />
                         返回登录
-                    </Button>
+                    </a>
                 </div>
             </CardFooter>
         </Card>
