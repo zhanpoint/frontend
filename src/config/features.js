@@ -87,4 +87,4 @@ export const getAvailableResetMethods = () => {
     if (isFeatureEnabled('SMS_SERVICE_ENABLED')) methods.push('phone');
     if (isFeatureEnabled('EMAIL_SERVICE_ENABLED')) methods.push('email');
     return methods;
-}; 
+};
